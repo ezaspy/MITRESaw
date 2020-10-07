@@ -32,16 +32,20 @@ def main():
                     for eachplatform in str(eachtechnique.split("'Platforms: ")[1]).split("'")[0].split(","):
                         key, value = str(re.sub(r"(CAPEC ID: )<a href=\"https://capec.mitre.org/data/definitions/\d+.html\" target=\"_blank\">(CAPEC-\d+)</a> ,", r"\1\2", str(eachtechnique.split(", 'Tactic: ")[0]+", 'Tactic: "+eachtactic+"', 'Platforms: "+eachplatform+", "+str(str(eachtechnique.split("'Platforms: ")[1]).split("'")[1:]).replace("', ', ', '",", ").replace("', ', ","").replace("', '","")[1:-3]).replace("'",""))).split("||||")
                         entries[key] = value
-    with open("mitre.csv", "a") as mitrecsv:
+    with open("collectedMITRE.csv", "a") as mitrecsv:
         mitrecsv.write("subid,id,tactic,platform,permissions_required,effective_permissions,data_sources,defense_bypassed,version,created,last_modified,threat_actor\n")
         for k, v in entries.items():
             details = str(str(re.sub(r"T\d{4}/\d{3}\">T\d{4}\.\d{3}</a>", r"", re.sub(r"T\d{4}\.\d{3}</a>,<a href=\"/techniques/T\d{4}/\d{3}\">", r"", k))).replace(" tactics\">","").replace(", Sub-techniques: , ",", ").replace(", Sub-techniques:  No sub-techniques, ",", ").replace(", ","<>").replace(",",";").replace("<>",","))
             for eachvalue in v.replace("'","").replace("[","").replace("]","").strip().split(", "):
-                row = re.findall(r"^ID: (T[^\,]+)\,", details)[0]
+                techniqueid = re.findall(r"^ID: (T[^\,]+)\,", details)[0]
+                if "." in techniqueid:
+                    row = techniqueid
+                else:
+                    row = "{}.000".format(techniqueid)
                 if "Sub-technique of:" in details:
                     row = "{},{}".format(row, str(re.findall(r"Sub-technique of: (T[^\,]+)\,", details)[0]))
                 else:
-                    row = "{},-".format(row)
+                    row = "{},{}".format(row, re.findall(r"^ID: (T[^\,]+)\,", details)[0])
                 row = "{},{}".format(row, re.findall(r"Tactic: ([^\,]+)\,", details)[0])
                 row = "{},{}".format(row, re.findall(r"Platforms: ([^\,]+)\,", details)[0])
                 if "Permissions Required:" in details:
