@@ -37,8 +37,6 @@ def main():
         for k, v in entries.items():
             details = str(str(re.sub(r"T\d{4}/\d{3}\">T\d{4}\.\d{3}</a>", r"", re.sub(r"T\d{4}\.\d{3}</a>,<a href=\"/techniques/T\d{4}/\d{3}\">", r"", k))).replace(" tactics\">","").replace(", Sub-techniques: , ",", ").replace(", Sub-techniques:  No sub-techniques, ",", ").replace(", ","<>").replace(",",";").replace("<>",","))
             for eachvalue in v.replace("'","").replace("[","").replace("]","").strip().split(", "):
-                print(details)
-                time.sleep(4)
                 row = re.findall(r"^ID: (T[^\,]+)\,", details)[0]
                 if "Sub-technique of:" in details:
                     row = "{},{}".format(row, str(re.findall(r"Sub-technique of: (T[^\,]+)\,", details)[0]))
@@ -69,7 +67,6 @@ def main():
                     row = "{},{}\n".format(row, eachvalue.strip())
                 else:
                     row = "{},-\n".format(row)
-                print(row)
                 mitrecsv.write(row)
 
 if __name__ == '__main__':
