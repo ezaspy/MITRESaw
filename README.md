@@ -1,4 +1,3 @@
-<br><br>
 <!-- PROJECT LOGO -->
 <p align="center">
   <h1 align="center">collectMITRE</h1>
@@ -10,12 +9,6 @@
     </a>
     <a href="https://github.com/markdown-templates/markdown-snippets/issues">
     <img src="https://img.shields.io/github/issues/markdown-templates/markdown-snippets.svg" alt="Issues">
-    </a>
-    <a href="https://github.com/markdown-templates/markdown-snippets/fork">
-    <img src="https://img.shields.io/github/forks/markdown-templates/markdown-snippets.svg" alt="Forks">
-    </a>
-    <a href="https://github.com/markdown-templates/markdown-snippets/stargazers">
-    <img src="https://img.shields.io/github/stars/markdown-templates/markdown-snippets.svg" alt="Stars">
     </a>
     <br><br>
   </p>
