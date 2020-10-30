@@ -38,7 +38,7 @@ def main():
         doCollect(mitreid)
         progress = str(round(round(int(counter)/int(nooftechniques)*100, 2)*2, 2))
         if verbose:
-            if progress.startswith("10.3") or progress.startswith("20.1") or progress.startswith("30.4") or progress.startswith("40.2") or progress.startswith("50.0") or progress.startswith("60.3") or progress.startswith("70.1") or progress.startswith("80.4") or progress.startswith("90.2"):
+            if progress.startswith("10.3") or progress.startswith("20.1") or progress.startswith("30.4") or progress.startswith("40.2") or progress.startswith("50.5") or progress.startswith("60.3") or progress.startswith("70.1") or progress.startswith("80.4") or progress.startswith("90.2"):
                 print("     -> Progress: {}% complete...".format(progress))
             else:
                 pass
