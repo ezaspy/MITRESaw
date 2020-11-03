@@ -88,6 +88,7 @@ def main():
         mitrecsv.write("name,description,subid,id,tactic,platform,system_requirements,permissions_required,effective_permissions,data_sources,defense_bypassed,version,created,last_modified,mitigations,software,threat_actor\n")
         for k, v in entries.items():
             details = str(str(re.sub(r"T\d{4}/\d{3}\">T\d{4}\.\d{3}</a>", r"", re.sub(r"T\d{4}\.\d{3}</a>,<a href=\"/techniques/T\d{4}/\d{3}\">", r"", k))).replace(" tactics\">","").replace(", Sub-techniques: , ",", ").replace(", Sub-techniques:  No sub-techniques, ",", ").replace(", ","<>").replace(",",";").replace("<>",",").replace("\\\\u202f"," "))
+            # Currently issues with: DNS Server; Exchange Email Delegate Permissions; Additional Cloud Credentials (et al.?)
             for eachvalue in str(str(v).replace("\\'","'").replace("[","").replace("]","").strip()).split(", "):
                 name = re.findall(r"^Technique: ([^\,]+)\,", details)[0]
                 description = re.sub(r"T[\d\.\/]{4,8}\">", r" ", str(re.findall(r"Description: ([\S\s]+)\.\.\,", details.replace(". ..","..").replace("...","..").replace(". ,",".,").replace(".\",",".,").replace("&gt;",">").replace("&lt;","<").replace("<p>","").replace("</p>","").replace("<ul><li>","(*)").replace("</li><li>","(*)").replace("</li></ul>","(*)").replace("</a>",""))[0]))
