@@ -4,11 +4,20 @@
   <p align="center">
     Collect all of MITRE ATT&amp;CK Framework into CSV
     <br><br>
-    <a href="https://mit-license.org">
-    <img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License: MIT">
+    <a href="https://opensource.org/licenses/MIT">
+    <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License">
     </a>
-    <a href="https://github.com/markdown-templates/markdown-snippets/issues">
+    <a href="https://www.python.org">
+    <img src="https://img.shields.io/badge/language-python-red" alt="Language">
+    </a>
+    <a href="https://github.com/ezaspy/collectMITRE/issues">
     <img src="https://img.shields.io/github/issues/markdown-templates/markdown-snippets.svg" alt="Issues">
+    </a>
+    <a href="https://github.com/ezaspy/collectMITRE/fork">
+    <img src="https://img.shields.io/github/forks/markdown-templates/markdown-snippets.svg" alt="Forks">
+    </a>
+    <a href="https://github.com/ezaspy/collectMITRE/stargazers">
+    <img src="https://img.shields.io/github/stars/markdown-templates/markdown-snippets.svg" alt="Stars">
     </a>
     <br><br>
   </p>
@@ -18,7 +27,6 @@
 ## Table of Contents
 
 * [About the Project](#about-the-project)
-  * [Built With](#built-with)
 * [Usage](#usage)
 * [Contributing](#contributing)
 * [License](#license)
@@ -30,12 +38,6 @@
 ## About The Project
 
 collectMITRE has been created to help collect a CSV-formatted version of the MITRE ATT&amp;CK Framework (https://attack.mitre.org)
-<br>
-
-### Built With
-
-* [Python 3.7+](https://www.python.org)
-* [Visual Studio Code](https://code.visualstudio.com)
 <br><br>
 
 
