@@ -16,7 +16,7 @@ def main():
         if "mitigations/M" in str(BeautifulSoup(urllib.request.urlopen("https://attack.mitre.org/techniques/{}/".format(eachid)).read(),"html.parser").find_all()):
             techniquecard = techniquecard+"<span Mitigations: "
             try:
-                for line in str(str(str(BeautifulSoup(urllib.request.urlopen("https://attack.mitre.org/techniques/{}/".format(eachid)).read(),"html.parser").find_all("table"))[1:-1]).split("</tbody>")[1]).split("\n"):
+                for line in str(str(BeautifulSoup(urllib.request.urlopen("https://attack.mitre.org/techniques/{}/".format(eachid)).read(),"html.parser").find_all("table"))[1:-1]).split("\n"):
                     if line.startswith("<a href=\"/mitigations/M"):
                         techniquecard = "{}{}".format(techniquecard, str(re.sub(r"<a href=\"/mitigations/M\d{4}\"> ", r"", line[0:-5]))+",")
                     else:
@@ -28,7 +28,7 @@ def main():
         if "software/S" in str(BeautifulSoup(urllib.request.urlopen("https://attack.mitre.org/techniques/{}/".format(eachid)).read(),"html.parser").find_all()):
             techniquecard = techniquecard+"<span Software: "
             try:
-                for line in str(str(str(BeautifulSoup(urllib.request.urlopen("https://attack.mitre.org/techniques/{}/".format(eachid)).read(),"html.parser").find_all("table"))[1:-1]).split("</tbody>")[1]).split("\n"):
+                for line in str(str(BeautifulSoup(urllib.request.urlopen("https://attack.mitre.org/techniques/{}/".format(eachid)).read(),"html.parser").find_all("table"))[1:-1]).split("\n"):
                     if line.startswith("<a href=\"/software/S"):
                         techniquecard = "{}{}".format(techniquecard, str(re.sub(r"<a href=\"/software/S\d{4}\"> ", r"", line[0:-5]))+",")
                     else:
@@ -51,14 +51,14 @@ def main():
     subprocess.Popen(["clear"])
     time.sleep(2)
     if verbose:
-        print("\n\n\n\n   -> Collecting MITRE ATT&CK techniques...\n")
+        print("\n\n\n   -> Collecting MITRE ATT&CK techniques...\n")
     else:
         pass
     ssl._create_default_https_context = ssl._create_unverified_context
     nooftechniques, counter = re.findall(r"<h6>Sub-techniques: (\d+)</h6>", str(BeautifulSoup(urllib.request.urlopen("https://attack.mitre.org/techniques/enterprise/").read(),"html.parser")))[0], 1
     techniquestable, entries = str(BeautifulSoup(urllib.request.urlopen("https://attack.mitre.org/techniques/enterprise/").read(),"html.parser").find_all("table"))[1:-1], {}
     for techniques in techniquestable.split("<tr class=\"technique\">")[1:]:
-        name, mitreid, subtechniques, collectedtechniques, threat_actor_list = str(str(re.sub(r"/techniques/T\d+\">( )", r"\1", str(re.sub(r"<code>([^\<]+)</code>", r"\1", (techniques.replace("<td>\n</td>","<td></td>").replace("<td></td>","").replace("\n<td>","").replace("</td>","").replace("</tr>","").replace("                            ","").replace("                        ","").replace("                    ","").replace(". . ",". ").replace(" </a>","<a href=\"").replace("\n<td colspan=\"2\">","").replace("\n","").replace("<a href=\"<a href=\"","<a href=\"")))).split("<a href=\"")[2]))).strip(), str(str(re.sub(r"/techniques/T\d+\">( )", r"\1", str(re.sub(r"<code>([^\<]+)</code>", r"\1", (techniques.replace("<td>\n</td>","<td></td>").replace("<td></td>","").replace("\n<td>","").replace("</td>","").replace("</tr>","").replace("                            ","").replace("                        ","").replace("                    ","").replace(". . ",". ").replace(" </a>","<a href=\"").replace("\n<td colspan=\"2\">","").replace("\n","").replace("<a href=\"<a href=\"","<a href=\"")))).split("<a href=\"")[1]))).strip(), str(re.sub(r"<code>([^\<]+)</code>", r"\1", (techniques.replace("<td>\n</td>","<td></td>").replace("<td></td>","").replace("\n<td>","").replace("</td>","").replace("</tr>","").replace("                            ","").replace("                        ","").replace("                    ","").replace(". . ",". ").replace(" </a>","<a href=\"").replace("\n<td colspan=\"2\">","").replace("\n","").replace("<a href=\"<a href=\"","<a href=\"")))), [], []
+        name, mitreid, subtechniques, collectedtechniques, threat_actor_list = str(str(re.sub(r"(/techniques/T|/software/S|/mitigations/M)\d+\">( )", r"\1", str(re.sub(r"<code>([^\<]+)</code>", r"\1", (techniques.replace("<td>\n</td>","<td></td>").replace("<td></td>","").replace("\n<td>","").replace("</td>","").replace("</tr>","").replace("                            ","").replace("                        ","").replace("                    ","").replace(". . ",". ").replace(" </a>","<a href=\"").replace("\n<td colspan=\"2\">","").replace("\n","").replace("<a href=\"<a href=\"","<a href=\"")))).split("<a href=\"")[2]))).strip(), str(str(re.sub(r"/techniques/T\d+\">( )", r"\1", str(re.sub(r"<code>([^\<]+)</code>", r"\1", (techniques.replace("<td>\n</td>","<td></td>").replace("<td></td>","").replace("\n<td>","").replace("</td>","").replace("</tr>","").replace("                            ","").replace("                        ","").replace("                    ","").replace(". . ",". ").replace(" </a>","<a href=\"").replace("\n<td colspan=\"2\">","").replace("\n","").replace("<a href=\"<a href=\"","<a href=\"")))).split("<a href=\"")[1]))).strip(), str(re.sub(r"<code>([^\<]+)</code>", r"\1", (techniques.replace("<td>\n</td>","<td></td>").replace("<td></td>","").replace("\n<td>","").replace("</td>","").replace("</tr>","").replace("                            ","").replace("                        ","").replace("                    ","").replace(". . ",". ").replace(" </a>","<a href=\"").replace("\n<td colspan=\"2\">","").replace("\n","").replace("<a href=\"<a href=\"","<a href=\"")))), [], []
         doCollect(mitreid)
         progress = str(round(round(int(counter)/int(nooftechniques)*100, 2)*2, 2))
         if verbose:
@@ -81,13 +81,13 @@ def main():
                         key, value = str(re.sub(r"(CAPEC ID: )<a href=\"https://capec.mitre.org/data/definitions/\d+.html\" target=\"_blank\">(CAPEC-\d+)</a> ,", r"\1\2", str(eachtechnique.split(", 'Tactic: ")[0]+", 'Tactic: "+eachtactic+"', 'Platforms: "+eachplatform+", "+str(str(eachtechnique.split("'Platforms: ")[1]).split("'")[1:]).replace("', ', ', '",", ").replace("', ', ","").replace("', '","")[1:-3]).replace("'",""))).split("||||")
                         entries[key] = value
     if verbose:
-        print("\n   -> Collection of MITRE ATT&CK Techniques completed.\n")
+        print("\n   -> Collection of MITRE ATT&CK Techniques completed.\n\n")
     else:
         pass
     with open("collectedMITRE.csv", "a") as mitrecsv:
-        mitrecsv.write("name,description,subid,id,tactic,platform,system_requirements,permissions_required,effective_permissions,data_sources,defense_bypassed,version,created,last_modified,threat_actor,software,mitigations\n")
+        mitrecsv.write("name,description,subid,id,tactic,platform,system_requirements,permissions_required,effective_permissions,data_sources,defense_bypassed,version,created,last_modified,mitigations,software,threat_actor\n")
         for k, v in entries.items():
-            details = str(str(re.sub(r"T\d{4}/\d{3}\">T\d{4}\.\d{3}</a>", r"", re.sub(r"T\d{4}\.\d{3}</a>,<a href=\"/techniques/T\d{4}/\d{3}\">", r"", k))).replace(" tactics\">","").replace(", Sub-techniques: , ",", ").replace(", Sub-techniques:  No sub-techniques, ",", ").replace(", ","<>").replace(",",";").replace("<>",","))
+            details = str(str(re.sub(r"T\d{4}/\d{3}\">T\d{4}\.\d{3}</a>", r"", re.sub(r"T\d{4}\.\d{3}</a>,<a href=\"/techniques/T\d{4}/\d{3}\">", r"", k))).replace(" tactics\">","").replace(", Sub-techniques: , ",", ").replace(", Sub-techniques:  No sub-techniques, ",", ").replace(", ","<>").replace(",",";").replace("<>",",").replace("\\\\u202f"," "))
             for eachvalue in str(str(v).replace("\\'","'").replace("[","").replace("]","").strip()).split(", "):
                 name = re.findall(r"^Technique: ([^\,]+)\,", details)[0]
                 description = re.sub(r"T[\d\.\/]{4,8}\">", r" ", str(re.findall(r"Description: ([\S\s]+)\.\.\,", details.replace(". ..","..").replace("...","..").replace(". ,",".,").replace(".\",",".,").replace("&gt;",">").replace("&lt;","<").replace("<p>","").replace("</p>","").replace("<ul><li>","(*)").replace("</li><li>","(*)").replace("</li></ul>","(*)").replace("</a>",""))[0]))
@@ -125,16 +125,22 @@ def main():
                 row = "{},{}".format(row, re.findall(r"Version: ([^\,]+)\,", details)[0])
                 row = "{},{}".format(row, re.findall(r"Created: ([^\,]+)\,", details)[0])
                 row = "{},{}".format(row, re.findall(r"Last Modified: (\d{1,2} [^\ ]+ \d{4})", details)[0])
-                if len(eachvalue.strip()) > 0:
-                    row = "{},{}".format(row, eachvalue.strip())
+                if "Mitigations:" in details:
+                    if len(re.findall(r"Mitigations: ([^\,]*)", details)) > 0:
+                        row = "{},{}".format(row, re.findall(r"Mitigations: ([^\,]*)", details)[0])
+                    else:
+                        row = "{},-".format(row)
                 else:
                     row = "{},-".format(row)
                 if "Software:" in details:
-                    row = "{},{}".format(row, re.findall(r"Software: ([^\,]+)\,", details)[0])
+                    if len(re.findall(r"Software: ([^\,]*)", details)) > 0:
+                        row = "{},{}".format(row, re.findall(r"Software: ([^\,]*)", details)[0])
+                    else:
+                        row = "{},-".format(row)
                 else:
                     row = "{},-".format(row)
-                if "Mitigations:" in details:
-                    row = "{},{}\n".format(row, re.findall(r"Mitigations: ([^\,]+)\,", details)[0])
+                if len(eachvalue.strip()) > 0:
+                    row = "{},{}\n".format(row, eachvalue.strip())
                 else:
                     row = "{},-\n".format(row)
                 mitrecsv.write(row)
