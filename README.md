@@ -91,14 +91,13 @@ Project Link: [https://github.com/ezaspy/collectMITRE](https://github.com/ezaspy
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/ezaspy/collectMITRE.svg?style=flat-square
-[contributors-url]: https://github.com/ezaspy/collectMITRE/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/ezaspy/collectMITRE.svg?style=flat-square
-[forks-url]: https://github.com/ezaspy/collectMITRE/network/members
-[stars-shield]: https://img.shields.io/github/stars/ezaspy/collectMITRE.svg?style=flat-square
-[stars-url]: https://github.com/ezaspy/collectMITRE/stargazers
-[issues-shield]: https://img.shields.io/github/issues/ezaspy/collectMITRE.svg?style=flat-square
-[issues-url]: https://github.com/ezaspy/collectMITRE/issues
-[license-shield]: https://img.shields.io/github/license/ezaspy/collectMITRE.svg?style=flat-square
-[license-url]: https://github.com/ezaspy/collectMITRE/master/LICENSE.txt
-[product-screenshot]: images/screenshot.png
+[contributors-shield]: https://img.shields.io/github/contributors/ezaspy/bruce.svg?style=flat-square
+[contributors-url]: https://github.com/ezaspy/bruce/graphs/contributors
+[forks-shield]: https://img.shields.io/github/forks/ezaspy/bruce.svg?style=flat-square
+[forks-url]: https://github.com/ezaspy/bruce/network/members
+[stars-shield]: https://img.shields.io/github/stars/ezaspy/bruce.svg?style=flat-square
+[stars-url]: https://github.com/ezaspy/bruce/stargazers
+[issues-shield]: https://img.shields.io/github/issues/ezaspy/bruce.svg?style=flat-square
+[issues-url]: https://github.com/ezaspy/bruce/issues
+[license-shield]: https://img.shields.io/github/license/ezaspy/bruce.svg?style=flat-square
+[license-url]: https://github.com/ezaspy/bruce/master/LICENSE.txt
