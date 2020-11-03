@@ -126,7 +126,15 @@ def main():
                 row = "{},{}".format(row, re.findall(r"Created: ([^\,]+)\,", details)[0])
                 row = "{},{}".format(row, re.findall(r"Last Modified: (\d{1,2} [^\ ]+ \d{4})", details)[0])
                 if len(eachvalue.strip()) > 0:
-                    row = "{},{}\n".format(row, eachvalue.strip())
+                    row = "{},{}".format(row, eachvalue.strip())
+                else:
+                    row = "{},-".format(row)
+                if "Software:" in details:
+                    row = "{},{}".format(row, re.findall(r"Software: ([^\,]+)\,", details)[0])
+                else:
+                    row = "{},-".format(row)
+                if "Mitigations:" in details:
+                    row = "{},{}\n".format(row, re.findall(r"Mitigations: ([^\,]+)\,", details)[0])
                 else:
                     row = "{},-\n".format(row)
                 mitrecsv.write(row)
