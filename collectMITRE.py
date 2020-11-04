@@ -3,7 +3,7 @@ import urllib.request, ssl, argparse, subprocess, re, time, sys
 from bs4 import BeautifulSoup
 
 parser = argparse.ArgumentParser()
-parser.add_argument("-v", "--verbose", help="Show logging", action='store_const', const=True, default=False)
+parser.add_argument("-v", "--verbose", help="Show progress", action='store_const', const=True, default=False)
 args = parser.parse_args()
 verbose = args.verbose
 
@@ -51,7 +51,7 @@ def main():
     subprocess.Popen(["clear"])
     time.sleep(2)
     if verbose:
-        print("\n\n\n   -> Collecting MITRE ATT&CK techniques...\n")
+        print("\n\n   -> Collecting MITRE ATT&CK techniques...\n")
     else:
         pass
     ssl._create_default_https_context = ssl._create_unverified_context
@@ -85,18 +85,17 @@ def main():
     else:
         pass
     with open("collectedMITRE.csv", "a") as mitrecsv:
-        mitrecsv.write("name,description,subid,id,tactic,platform,system_requirements,permissions_required,effective_permissions,data_sources,defense_bypassed,version,created,last_modified,mitigations,software,threat_actor\n")
+        mitrecsv.write("name,description,subid,id,tactic,platform,system_requirements,permissions_required,effective_permissions,data_sources,defense_bypassed,version,created,last_modified,detection,mitigations,software,threat_actor\n")
         for k, v in entries.items():
             details = str(str(re.sub(r"T\d{4}/\d{3}\">T\d{4}\.\d{3}</a>", r"", re.sub(r"T\d{4}\.\d{3}</a>,<a href=\"/techniques/T\d{4}/\d{3}\">", r"", k))).replace(" tactics\">","").replace(", Sub-techniques: , ",", ").replace(", Sub-techniques:  No sub-techniques, ",", ").replace(", ","<>").replace(",",";").replace("<>",",").replace("\\\\u202f"," "))
-            # Currently issues with: DNS Server; Exchange Email Delegate Permissions; Additional Cloud Credentials (et al.?)
             for eachvalue in str(str(v).replace("\\'","'").replace("[","").replace("]","").strip()).split(", "):
                 name = re.findall(r"^Technique: ([^\,]+)\,", details)[0]
-                description = re.sub(r"T[\d\.\/]{4,8}\">", r" ", str(re.findall(r"Description: ([\S\s]+)\.\.\,", details.replace(". ..","..").replace("...","..").replace(". ,",".,").replace(".\",",".,").replace("&gt;",">").replace("&lt;","<").replace("<p>","").replace("</p>","").replace("<ul><li>","(*)").replace("</li><li>","(*)").replace("</li></ul>","(*)").replace("</a>",""))[0]))
+                description = str(str(re.sub(r"([a-z]\.)([A-Z])", r"\1 \2", str(str(re.sub(r"<a href=\"https://attack\.mitre\.org/tactics/TA\d{4}\">", r"", str(re.sub(r"<a href=\"/software/S\d{4}\">", r"", str(re.sub(r"T[\d\.\/]{4,8}\">", r" ", str(re.findall(r"Description: ([\S\s]+)\.\.\,", details.replace(". ..","..").replace("...","..").replace(". ,",".,").replace(".\",",".,").replace("&gt;",">").replace("&lt;","<").replace("<p>","").replace("</p>","").replace("<ul><li>","(*)").replace("</li><li>","(*)").replace("</li></ul>","(*)").replace("</a>","").replace("\\s ","'s").replace("(*)"," (*)").replace("  "," ").replace("Äô","").replace("Äî","").replace("<em>","").replace("</em>","").replace("</username>","").replace("<labelname> ","").replace("</labelname>",""))[0]))))))).replace(";","; ").replace(" / ","/").replace("<a href=\"/techniques/","")))).strip(":")+".").replace("..",".").replace("tokens.may","tokens may").replace("\\\\","\\")
                 techniqueid = re.findall(r"ID: (T[^\,]+)\,", details)[0]
                 if "." in techniqueid:
-                    row = "{},{},{}".format(name, description.replace(";","; "), techniqueid)
+                    row = "{},{},{}".format(name, description, techniqueid)
                 else:
-                    row = "{},{},{}.000".format(name, description.replace(";","; "), techniqueid)
+                    row = "{},{},{}.000".format(name, description, techniqueid)
                 if "Sub-technique of:" in details:
                     row = "{},{}".format(row, str(re.findall(r"Sub-technique of: (T[^\,]+)\,", details)[0]))
                 else:
@@ -104,7 +103,7 @@ def main():
                 row = "{},{}".format(row, re.findall(r"Tactic: ([^\,]+)\,", details)[0])
                 row = "{},{}".format(row, re.findall(r"Platforms: ([^\,]+)\,", details)[0])
                 if "System Requirements:" in details:
-                    row = "{},{}".format(row, str(re.findall(r"System Requirements: ([^\,]+)\,", details)[0]))
+                    row = "{},{}".format(row, str(re.findall(r"System Requirements: ([^\,]+)\,", details)[0]).replace("<code>","").replace("</code>",""))
                 else:
                     row = "{},-".format(row)
                 if "Permissions Required:" in details:
@@ -126,6 +125,13 @@ def main():
                 row = "{},{}".format(row, re.findall(r"Version: ([^\,]+)\,", details)[0])
                 row = "{},{}".format(row, re.findall(r"Created: ([^\,]+)\,", details)[0])
                 row = "{},{}".format(row, re.findall(r"Last Modified: (\d{1,2} [^\ ]+ \d{4})", details)[0])
+                """if "Detection:" in details:
+                    if len(re.findall(r"Detection: ([^\,]*)", details)) > 0:
+                        row = "{},{}".format(row, re.findall(r"Detection: ([^\,]*)", details)[0])
+                    else:
+                        row = "{},-".format(row)
+                else:
+                    row = "{},-".format(row)"""
                 if "Mitigations:" in details:
                     if len(re.findall(r"Mitigations: ([^\,]*)", details)) > 0:
                         row = "{},{}".format(row, re.findall(r"Mitigations: ([^\,]*)", details)[0])
