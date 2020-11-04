@@ -4,20 +4,25 @@
   <p align="center">
     Collect all of MITRE ATT&amp;CK Framework into CSV
     <br><br>
-    <a href="https://opensource.org/licenses/MIT">
-    <img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License">
+    <a href="https://mit-license.org">
+    <img src="https://img.shields.io/badge/license-MIT-black.svg" alt="License: MIT">
     </a>
-    <a href="https://www.python.org">
-    <img src="https://img.shields.io/badge/language-python-red" alt="Language">
-    </a>
-    <a href="https://github.com/ezaspy/collectMITRE/issues">
+    <a href="https://github.com/collectMITRE/issues">
     <img src="https://img.shields.io/github/issues/markdown-templates/markdown-snippets.svg" alt="Issues">
     </a>
-    <a href="https://github.com/ezaspy/collectMITRE/fork">
+    <a href="https://github.com/collectMITRE/forks">
     <img src="https://img.shields.io/github/forks/markdown-templates/markdown-snippets.svg" alt="Forks">
-    </a>
     <a href="https://github.com/ezaspy/collectMITRE/stargazers">
     <img src="https://img.shields.io/github/stars/markdown-templates/markdown-snippets.svg" alt="Stars">
+    </a>
+    </a>
+    <a href="https://www.python.org">
+    <img src="https://img.shields.io/badge/language-python-yellow" alt="Python">
+    </a>
+    <img src="https://img.shields.io/badge/subject-DFIR-red" alt="Subject">
+    </a>
+    <a href="https://github.com/collectMITRE/forks">
+    <img src="https://img.shields.io/github/last-commit/ezaspy/bruce" alt="Last Commit">
     </a>
     <br><br>
   </p>
