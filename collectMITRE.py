@@ -85,7 +85,7 @@ def main():
     else:
         pass
     with open("collectedMITRE.csv", "a") as mitrecsv:
-        mitrecsv.write("name,description,subid,id,tactic,platform,system_requirements,permissions_required,effective_permissions,data_sources,defense_bypassed,version,created,last_modified,detection,mitigations,software,threat_actor\n")
+        mitrecsv.write("name,description,subid,id,tactic,platform,system_requirements,permissions_required,effective_permissions,data_sources,defense_bypassed,version,created,last_modified,mitigations,software,threat_actor\n")
         for k, v in entries.items():
             details = str(str(re.sub(r"T\d{4}/\d{3}\">T\d{4}\.\d{3}</a>", r"", re.sub(r"T\d{4}\.\d{3}</a>,<a href=\"/techniques/T\d{4}/\d{3}\">", r"", k))).replace(" tactics\">","").replace(", Sub-techniques: , ",", ").replace(", Sub-techniques:  No sub-techniques, ",", ").replace(", ","<>").replace(",",";").replace("<>",",").replace("\\\\u202f"," "))
             for eachvalue in str(str(v).replace("\\'","'").replace("[","").replace("]","").strip()).split(", "):
