@@ -93,8 +93,6 @@ def main():
         mitrecsv.write("name,description,subid,id,tactic,platform,system_requirements,permissions_required,effective_permissions,data_sources,defense_bypassed,version,created,last_modified,detection,mitigations,software,threat_actor\n")
         for k, v in entries.items():
             details = str(str(re.sub(r"T\d{4}/\d{3}\">T\d{4}\.\d{3}</a>", r"", re.sub(r"T\d{4}\.\d{3}</a>,<a href=\"/techniques/T\d{4}/\d{3}\">", r"", k))).replace(" tactics\">","").replace(", Sub-techniques: , ",", ").replace(", Sub-techniques:  No sub-techniques, ",", ").replace(", ","<>").replace(",",";").replace("<>",",").replace("\\\\u202f"," "))
-            print(details)
-            print("\n\n")
             for eachvalue in str(str(v).replace("\\'","'").replace("[","").replace("]","").strip()).split(", "):
                 name = re.findall(r"^Technique: ([^\,]+)\,", details)[0]
                 description = str(str(re.sub(r"([a-z]\.)([A-Z])", r"\1 \2", str(str(re.sub(r"<a href=\"https://attack\.mitre\.org/tactics/TA\d{4}\">", r"", str(re.sub(r"<a href=\"/software/S\d{4}\">", r"", str(re.sub(r"T[\d\.\/]{4,8}\">", r" ", str(re.findall(r"Description: ([\S\s]+)\.\.\,", details.replace(". ..","..").replace("...","..").replace(". ,",".,").replace(".\",",".,").replace("&gt;",">").replace("&lt;","<").replace("<p>","").replace("</p>","").replace("<ul><li>","(*)").replace("</li><li>","(*)").replace("</li></ul>","(*)").replace("</a>","").replace("\\s ","'s").replace("(*)"," (*)").replace("  "," ").replace("Äô","").replace("Äî","").replace("<em>","").replace("</em>","").replace("</username>","").replace("<labelname> ","").replace("</labelname>",""))[0]))))))).replace(";","; ").replace(" / ","/").replace("<a href=\"/techniques/","")))).strip(":")+".").replace("..",".").replace("tokens.may","tokens may").replace("\\\\","\\")
@@ -135,7 +133,6 @@ def main():
                 if "Detection:" in details:
                     if len(re.findall(r"Detection: ([^\,]*)", details)) > 0:
                         row = "{},{}".format(row, re.findall(r"Detection: ([^\,]*)", details)[0])
-                        #row = "{},{}".format(row, re.findall(r"Detection: ([^\,\<]*)", details)[0])
                     else:
                         row = "{},-".format(row)
                 else:
@@ -143,7 +140,6 @@ def main():
                 if "Mitigations:" in details:
                     if len(re.findall(r"Mitigations: ([^\,]*)", details)) > 0:
                         if len(re.findall(r"Mitigations: ([^\,]*)", details)[0]) > 1:
-                            #print(re.findall(r"Mitigations: ([^\,]*)", details)[0])
                             row = "{},{}".format(row, re.findall(r"Mitigations: ([^\,]*)", details)[0])
                         else:
                             row = "{},-".format(row)
@@ -154,7 +150,6 @@ def main():
                 if "Software:" in details:
                     if len(re.findall(r"Software: ([^\,]*)", details)) > 0:
                         if len(re.findall(r"Software: ([^\,]*)", details)[0]) > 1:
-                            #print(re.findall(r"Software: ([^\,]*)", details)[0])
                             row = "{},{}".format(row, re.findall(r"Software: ([^\,]*)", details)[0])
                         else:
                             row = "{},-".format(row)
