@@ -9,11 +9,16 @@ verbose = args.verbose
 
 def main():
     def doCollect(eachid):
+        urlrequest = str(BeautifulSoup(urllib.request.urlopen("https://attack.mitre.org/techniques/{}/".format(eachid)).read(),"html.parser").find_all())
         regex = re.compile(r"href=\"\/techniques\/"+str(eachid.replace(".","/"))+r"\/\">[\S\s]\s+[A-Za-z\.\/][\w\-\ \.\/\(\)]+[A-Za-z\(\)]")
-        name = re.sub(r"[\S\s]+\s{2,}", r"<span class=\"h5 card-title\">Technique: ", str(re.findall(regex, str(BeautifulSoup(urllib.request.urlopen("https://attack.mitre.org/techniques/{}/".format(eachid)).read(),"html.parser").find_all()))[0]))
-        description = str("<span class=\"h5 card-title\">Description: "+str(re.sub(r"</p><p>", r" ", str(re.sub(r"\<span\s.*\<\/span>", r"", str(re.findall(r"<div class=\"description-body\">[\S\s]{4}(.*)</p>", str(BeautifulSoup(urllib.request.urlopen("https://attack.mitre.org/techniques/{}/".format(eachid)).read(),"html.parser").find_all()))[1]))).replace(". .",".").replace(".\".",".").replace("<code>","").replace("</code>",""))))+".."
-        techniquecard, cards = str(name+description+str(str((BeautifulSoup(urllib.request.urlopen("https://attack.mitre.org/techniques/{}/".format(eachid)).read(),"html.parser").find_all())).replace("\\n","\n").replace("\n","\\n").split("<div class=\"col-md-4\">\\n<div class=\"card\">\\n<div class=\"card-body\">\\n<div class=\"card-data\" id=\"card-id\">")[1]).split("</div>\\n</div>\\n</div>\\n<div class=\"text-center pt-2 version-button live\">\\n<div class=\"live\">")[0]).replace("\\\"","\""), []
-        if "mitigations/M" in str(BeautifulSoup(urllib.request.urlopen("https://attack.mitre.org/techniques/{}/".format(eachid)).read(),"html.parser").find_all()):
+        name = re.sub(r"[\S\s]+\s{2,}", r"<span class=\"h5 card-title\">Technique: ", str(re.findall(regex, urlrequest)[0]))
+        description = str("<span class=\"h5 card-title\">Description: "+str(re.sub(r"</p><p>", r" ", str(re.sub(r"\<span\s.*\<\/span>", r"", str(re.findall(r"<div class=\"description-body\">[\S\s]{4}(.*)</p>", urlrequest)[1]))).replace(". .",".").replace(".\".",".").replace("<code>","").replace("</code>",""))))+".."
+        techniquecard, cards = str(name+description+str(urlrequest.replace("\\n","\n").replace("\n","\\n").split("<div class=\"col-md-4\">\\n<div class=\"card\">\\n<div class=\"card-body\">\\n<div class=\"card-data\" id=\"card-id\">")[1]).split("</div>\\n</div>\\n</div>\\n<div class=\"text-center pt-2 version-button live\">\\n<div class=\"live\">")[0]).replace("\\\"","\""), []
+        if ">Detection</h2>" in urlrequest:
+            techniquecard = "{}<span Detection: {},".format(techniquecard, str(re.sub(r"<a href=\"https://attack.mitre.org/tactics/TA\d{4}\">", r"", str(re.sub(r"([A-Za-z]\.)([A-Z])", r"\1 \2", str(re.sub(r"<a href=\"/software/S\d{4}\">", r"", str(re.sub(r"\[\d+\]", r"", str(re.sub(r"\<sup>[^\>]+\>", r"", str(re.sub(r"\<span[^\>]+\>", r"", str(re.sub(r"<a href=\"/techniques/T\d{4}\">", r"", str(re.sub(r"<a href=\"/techniques/T\d{4}/\d{3}\">", r"", str(str(urlrequest.split(">Detection</h2>")[1].split("<h2 class")[0]).replace("\n","\\n")[12:-14].replace("<code>","").replace("</code>","").replace(",",";").replace(" / ","/").replace("&gt;",">").replace("&lt;","<").replace("&amp;","&").replace("<p>","").replace("</p>","").replace("<ul><li>","(*)").replace("</li><li>","(*)").replace("</li></ul>","(*)").replace("</a>","").replace("\\s ","'s").replace("(*)"," (*)").replace("  "," ").replace("Äô","").replace("Äî","").replace("<em>","").replace("</em>","").replace("</username>","").replace("<labelname> ","").replace("</labelname>","").replace("</sup>","").replace("</span>","")))))))))))))))))).replace(" ; ","; ").replace("\\\\","\\").split("<div class")[0]).replace("  ","")
+        else:
+            pass
+        if "mitigations/M" in urlrequest:
             techniquecard = techniquecard+"<span Mitigations: "
             try:
                 for line in str(str(BeautifulSoup(urllib.request.urlopen("https://attack.mitre.org/techniques/{}/".format(eachid)).read(),"html.parser").find_all("table"))[1:-1]).split("\n"):
@@ -25,7 +30,7 @@ def main():
                 pass
         else:
             pass
-        if "software/S" in str(BeautifulSoup(urllib.request.urlopen("https://attack.mitre.org/techniques/{}/".format(eachid)).read(),"html.parser").find_all()):
+        if "software/S" in urlrequest:
             techniquecard = techniquecard+"<span Software: "
             try:
                 for line in str(str(BeautifulSoup(urllib.request.urlopen("https://attack.mitre.org/techniques/{}/".format(eachid)).read(),"html.parser").find_all("table"))[1:-1]).split("\n"):
@@ -85,9 +90,11 @@ def main():
     else:
         pass
     with open("collectedMITRE.csv", "a") as mitrecsv:
-        mitrecsv.write("name,description,subid,id,tactic,platform,system_requirements,permissions_required,effective_permissions,data_sources,defense_bypassed,version,created,last_modified,mitigations,software,threat_actor\n")
+        mitrecsv.write("name,description,subid,id,tactic,platform,system_requirements,permissions_required,effective_permissions,data_sources,defense_bypassed,version,created,last_modified,detection,mitigations,software,threat_actor\n")
         for k, v in entries.items():
             details = str(str(re.sub(r"T\d{4}/\d{3}\">T\d{4}\.\d{3}</a>", r"", re.sub(r"T\d{4}\.\d{3}</a>,<a href=\"/techniques/T\d{4}/\d{3}\">", r"", k))).replace(" tactics\">","").replace(", Sub-techniques: , ",", ").replace(", Sub-techniques:  No sub-techniques, ",", ").replace(", ","<>").replace(",",";").replace("<>",",").replace("\\\\u202f"," "))
+            print(details)
+            print("\n\n")
             for eachvalue in str(str(v).replace("\\'","'").replace("[","").replace("]","").strip()).split(", "):
                 name = re.findall(r"^Technique: ([^\,]+)\,", details)[0]
                 description = str(str(re.sub(r"([a-z]\.)([A-Z])", r"\1 \2", str(str(re.sub(r"<a href=\"https://attack\.mitre\.org/tactics/TA\d{4}\">", r"", str(re.sub(r"<a href=\"/software/S\d{4}\">", r"", str(re.sub(r"T[\d\.\/]{4,8}\">", r" ", str(re.findall(r"Description: ([\S\s]+)\.\.\,", details.replace(". ..","..").replace("...","..").replace(". ,",".,").replace(".\",",".,").replace("&gt;",">").replace("&lt;","<").replace("<p>","").replace("</p>","").replace("<ul><li>","(*)").replace("</li><li>","(*)").replace("</li></ul>","(*)").replace("</a>","").replace("\\s ","'s").replace("(*)"," (*)").replace("  "," ").replace("Äô","").replace("Äî","").replace("<em>","").replace("</em>","").replace("</username>","").replace("<labelname> ","").replace("</labelname>",""))[0]))))))).replace(";","; ").replace(" / ","/").replace("<a href=\"/techniques/","")))).strip(":")+".").replace("..",".").replace("tokens.may","tokens may").replace("\\\\","\\")
@@ -125,23 +132,32 @@ def main():
                 row = "{},{}".format(row, re.findall(r"Version: ([^\,]+)\,", details)[0])
                 row = "{},{}".format(row, re.findall(r"Created: ([^\,]+)\,", details)[0])
                 row = "{},{}".format(row, re.findall(r"Last Modified: (\d{1,2} [^\ ]+ \d{4})", details)[0])
-                """if "Detection:" in details:
+                if "Detection:" in details:
                     if len(re.findall(r"Detection: ([^\,]*)", details)) > 0:
                         row = "{},{}".format(row, re.findall(r"Detection: ([^\,]*)", details)[0])
+                        #row = "{},{}".format(row, re.findall(r"Detection: ([^\,\<]*)", details)[0])
                     else:
                         row = "{},-".format(row)
                 else:
-                    row = "{},-".format(row)"""
+                    row = "{},-".format(row)
                 if "Mitigations:" in details:
                     if len(re.findall(r"Mitigations: ([^\,]*)", details)) > 0:
-                        row = "{},{}".format(row, re.findall(r"Mitigations: ([^\,]*)", details)[0])
+                        if len(re.findall(r"Mitigations: ([^\,]*)", details)[0]) > 1:
+                            #print(re.findall(r"Mitigations: ([^\,]*)", details)[0])
+                            row = "{},{}".format(row, re.findall(r"Mitigations: ([^\,]*)", details)[0])
+                        else:
+                            row = "{},-".format(row)
                     else:
                         row = "{},-".format(row)
                 else:
                     row = "{},-".format(row)
                 if "Software:" in details:
                     if len(re.findall(r"Software: ([^\,]*)", details)) > 0:
-                        row = "{},{}".format(row, re.findall(r"Software: ([^\,]*)", details)[0])
+                        if len(re.findall(r"Software: ([^\,]*)", details)[0]) > 1:
+                            #print(re.findall(r"Software: ([^\,]*)", details)[0])
+                            row = "{},{}".format(row, re.findall(r"Software: ([^\,]*)", details)[0])
+                        else:
+                            row = "{},-".format(row)
                     else:
                         row = "{},-".format(row)
                 else:
