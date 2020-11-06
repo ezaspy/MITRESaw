@@ -49,7 +49,7 @@ collectMITRE has been created to help collect a CSV-formatted version of the MIT
 ## Usage
 `python3 collectMITRE.py [-h] [-v]`
 ### Example
-`python3 collectMITRE.py`
+`python3 collectMITRE.py -v`
 ### Support
 See the [support](https://github.com/ezaspy/collectMITRE/issues) for a list of commands and additional third-party tools to help with preparing images or data for collectMITRE.
 <br><br>
