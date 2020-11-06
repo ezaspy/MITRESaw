@@ -166,7 +166,7 @@ def main():
                     row = "{},{}\n".format(row, eachvalue.strip())
                 else:
                     row = "{},-\n".format(row)
-                mitrecsv.write(row)
+                mitrecsv.write(row.replace("\\\\","\\"))
 
 if __name__ == '__main__':
 	main()
