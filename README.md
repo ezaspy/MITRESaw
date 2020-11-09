@@ -19,9 +19,7 @@
     <img src="https://img.shields.io/badge/language-python-yellow" alt="Python">
     </a>
     <img src="https://img.shields.io/badge/subject-DFIR-red" alt="Subject">
-    <a href="https://github.com/collectMITRE/forks">
     <img src="https://img.shields.io/github/last-commit/ezaspy/collectMITRE" alt="Last Commit">
-    </a>
     <br><br>
   </p>
 </p>
