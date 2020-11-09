@@ -79,12 +79,12 @@ def main():
             if subid.startswith(".0"):
                 doCollect(str(mitreid)+"/"+str(subid.strip(".")))
             else:
-                pass    
-            for eachtechnique in collectedtechniques:
-                for eachtactic in str(eachtechnique.split("'Tactic: ")[1]).split("'")[0].split(","):
-                    for eachplatform in str(eachtechnique.split("'Platforms: ")[1]).split("'")[0].split(","):
-                        key, value = str(re.sub(r"(CAPEC ID: )<a href=\"https://capec.mitre.org/data/definitions/\d+.html\" target=\"_blank\">(CAPEC-\d+)</a> ,", r"\1\2", str(eachtechnique.split(", 'Tactic: ")[0]+", 'Tactic: "+eachtactic+"', 'Platforms: "+eachplatform+", "+str(str(eachtechnique.split("'Platforms: ")[1]).split("'")[1:]).replace("', ', ', '",", ").replace("', ', ","").replace("', '","")[1:-3]).replace("'",""))).split("||||")
-                        entries[key] = value
+                pass
+        for eachtechnique in collectedtechniques:
+            for eachtactic in str(eachtechnique.split("'Tactic: ")[1]).split("'")[0].split(","):
+                for eachplatform in str(eachtechnique.split("'Platforms: ")[1]).split("'")[0].split(","):
+                    key, value = str(re.sub(r"(CAPEC ID: )<a href=\"https://capec.mitre.org/data/definitions/\d+.html\" target=\"_blank\">(CAPEC-\d+)</a> ,", r"\1\2", str(eachtechnique.split(", 'Tactic: ")[0]+", 'Tactic: "+eachtactic+"', 'Platforms: "+eachplatform+", "+str(str(eachtechnique.split("'Platforms: ")[1]).split("'")[1:]).replace("', ', ', '",", ").replace("', ', ","").replace("', '","")[1:-3]).replace("'",""))).split("||||")
+                    entries[key] = value
     if verbose:
         print("\n   -> Collection of MITRE ATT&CK Techniques completed.\n\n")
     else:
@@ -132,7 +132,7 @@ def main():
                 row = "{},{}".format(row, re.findall(r"Last Modified: (\d{1,2} [^\ ]+ \d{4})", details)[0])
                 if "Detection:" in details:
                     if len(re.findall(r"Detection: ([^\,]*)", details)) > 0:
-                        row = "{},{}".format(row, re.findall(r"Detection: ([^\,]*)", details)[0])
+                        row = "{},{}".format(row, str(re.findall(r"Detection: ([^\,]*)", details)[0]).strip("\""))
                     else:
                         row = "{},-".format(row)
                 else:
