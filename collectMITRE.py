@@ -16,7 +16,7 @@ parser.add_argument(
     default=False,
 )
 args = parser.parse_args()
-verbose, elrond = args.verbose, args.elrond
+verbose = args.verbose
 
 
 def main():

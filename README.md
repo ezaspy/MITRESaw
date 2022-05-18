@@ -49,7 +49,7 @@ collectMITRE has been created to help collect a CSV-formatted version of the MIT
 
 <!-- USAGE EXAMPLES -->
 ## Usage
-`python3 collectMITRE.py [-h] [-ve]`
+`python3 collectMITRE.py [-h] [-v]`
 ### Example
 `python3 collectMITRE.py -v`
 <br><br>
