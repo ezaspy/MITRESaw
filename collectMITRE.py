@@ -43,7 +43,7 @@ def main():
         json_data = json.load(attack_json)
     with open("./enterprise-attack.csv", "w") as attack_csv:
         attack_csv.write(
-            "main_id,id,sub_id,name,description,platforms,phase,created,modified,detection,data_sources,defences_bypassed,actors,software\n"
+            "main_id,id,sub_id,name,description,platform,tactic,created,modified,detection,data_sources,defences_bypassed,threat_actor,software\n"
         )
     for key, value in json_data.items():
         if key == "objects":
