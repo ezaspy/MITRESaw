@@ -5,21 +5,25 @@
     Collect all of MITRE ATT&amp;CK Framework into CSV
     <br><br>
     <a href="https://mit-license.org">
-    <img src="https://img.shields.io/badge/license-MIT-black.svg" alt="License: MIT">
+      <img src="https://img.shields.io/github/license/ezaspy/collectMITRE" alt="License: MIT">
     </a>
-    <a href="https://github.com/collectMITRE/issues">
-    <img src="https://img.shields.io/github/issues/markdown-templates/markdown-snippets.svg" alt="Issues">
+    <a href="https://github.com/ezaspy/collectMITRE/issues">
+      <img src="https://img.shields.io/github/issues/ezaspy/collectMITRE" alt="Issues">
     </a>
-    <a href="https://github.com/collectMITRE/forks">
-    <img src="https://img.shields.io/github/forks/markdown-templates/markdown-snippets.svg" alt="Forks">
+    <a href="https://github.com/ezaspy/collectMITRE/network/members">
+      <img src="https://img.shields.io/github/forks/ezaspy/collectMITRE" alt="Forks">
     <a href="https://github.com/ezaspy/collectMITRE/stargazers">
-    <img src="https://img.shields.io/github/stars/markdown-templates/markdown-snippets.svg" alt="Stars">
+      <img src="https://img.shields.io/github/stars/ezaspy/collectMITRE" alt="Stars">
     </a>
     <a href="https://www.python.org">
-    <img src="https://img.shields.io/badge/language-python-yellow" alt="Python">
+      <img src="https://img.shields.io/badge/language-python-pink" alt="Python">
     </a>
-    <img src="https://img.shields.io/badge/subject-DFIR-red" alt="Subject">
-    <img src="https://img.shields.io/github/last-commit/ezaspy/collectMITRE" alt="Last Commit">
+    </a>
+      <img src="https://img.shields.io/github/last-commit/ezaspy/collectMITRE" alt="Last Commit">
+    </a>
+    <a href="https://github.com/psf/black">
+      <img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg">
+    </a>
     <br><br>
   </p>
 </p>
@@ -48,8 +52,6 @@ collectMITRE has been created to help collect a CSV-formatted version of the MIT
 `python3 collectMITRE.py [-h] [-v]`
 ### Example
 `python3 collectMITRE.py -v`
-### Support
-See the [support](https://github.com/ezaspy/collectMITRE/issues) for a list of commands and additional third-party tools to help with preparing images or data for collectMITRE.
 <br><br>
 
 
@@ -76,7 +78,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 <!-- CONTACT -->
 ## Contact
 
-ezaspy - ezaspython@gmail.com
+ezaspy - ezaspython (at) gmail (dot) com
 
 Project Link: [https://github.com/ezaspy/collectMITRE](https://github.com/ezaspy/collectMITRE)
 <br><br>
