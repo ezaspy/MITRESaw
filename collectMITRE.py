@@ -21,29 +21,18 @@ verbose = args.verbose
 
 def main():
     subprocess.Popen(["clear"])
-    json_framework = (
-        str(
-            urllib.request.urlopen(
-                "https://github.com/mitre/cti/raw/master/enterprise-attack/enterprise-attack.json"
-            ).read()
-        )[2:-1]
-        .replace("\\\\\\\\", "\\\\")
-        .replace("\\x", "\\\\x")
-        .replace("\\'", "'")
-        .replace('\\\\"', '\\"')
-        .replace("\\\\\\x", "\\\\x")
-        .replace("\\\\\\x", "\\\\x")
-        .replace("\\\\\\x", "\\\\x")
-    )
+    json_framework = urllib.request.urlopen(
+        "https://github.com/mitre/cti/raw/master/enterprise-attack/enterprise-attack.json"
+    ).read()
     attack_list = []
     attack_dict = {}
-    with open("./enterprise-attack.json", "w") as attack_json:
+    with open("./enterprise-attack.json", "wb") as attack_json:
         attack_json.write(json_framework)
     with open("./enterprise-attack.json") as attack_json:
         json_data = json.load(attack_json)
     with open("./enterprise-attack.csv", "w") as attack_csv:
         attack_csv.write(
-            "main_id,id,sub_id,name,description,platform,tactic,created,modified,detection,data_sources,defences_bypassed,threat_actor,software\n"
+            "mitre_id,parent_id,sub_id,name,mitre_description,platform,tactic,created,modified,detection,data_sources,defences_bypassed,threat_actor,software\n"
         )
     for key, value in json_data.items():
         if key == "objects":
@@ -55,7 +44,7 @@ def main():
                         pass
         else:
             pass
-    time.sleep(2)
+    time.sleep(0.5)
     print()
     for each_attack in attack_list:
         csv_row = ""
@@ -437,7 +426,9 @@ def main():
                                     with open(
                                         "./enterprise-attack.csv", "a"
                                     ) as attack_csv:
-                                        attack_csv.write(final_csv_row + "\n")
+                                        attack_csv.write(
+                                            final_csv_row.replace("\n", " ") + "\n"
+                                        )
                                 else:
                                     pass
                         else:
