@@ -1,25 +1,25 @@
 <!-- PROJECT LOGO -->
 <p align="center">
-  <h1 align="center">collectMITRE</h1>
+  <h1 align="center">csvMITRE</h1>
   <p align="center">
     Collect all of MITRE ATT&amp;CK Framework into CSV
     <br><br>
     <a href="https://mit-license.org">
-      <img src="https://img.shields.io/github/license/ezaspy/collectMITRE" alt="License: MIT">
+      <img src="https://img.shields.io/github/license/ezaspy/csvMITRE" alt="License: MIT">
     </a>
-    <a href="https://github.com/ezaspy/collectMITRE/issues">
-      <img src="https://img.shields.io/github/issues/ezaspy/collectMITRE" alt="Issues">
+    <a href="https://github.com/ezaspy/csvMITRE/issues">
+      <img src="https://img.shields.io/github/issues/ezaspy/csvMITRE" alt="Issues">
     </a>
-    <a href="https://github.com/ezaspy/collectMITRE/network/members">
-      <img src="https://img.shields.io/github/forks/ezaspy/collectMITRE" alt="Forks">
-    <a href="https://github.com/ezaspy/collectMITRE/stargazers">
-      <img src="https://img.shields.io/github/stars/ezaspy/collectMITRE" alt="Stars">
+    <a href="https://github.com/ezaspy/csvMITRE/network/members">
+      <img src="https://img.shields.io/github/forks/ezaspy/csvMITRE" alt="Forks">
+    <a href="https://github.com/ezaspy/csvMITRE/stargazers">
+      <img src="https://img.shields.io/github/stars/ezaspy/csvMITRE" alt="Stars">
     </a>
     <a href="https://www.python.org">
       <img src="https://img.shields.io/badge/language-python-pink" alt="Python">
     </a>
     </a>
-      <img src="https://img.shields.io/github/last-commit/ezaspy/collectMITRE" alt="Last Commit">
+      <img src="https://img.shields.io/github/last-commit/ezaspy/csvMITRE" alt="Last Commit">
     </a>
     <a href="https://github.com/psf/black">
       <img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg">
@@ -43,15 +43,15 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-collectMITRE has been created to help collect a CSV-formatted version of the MITRE ATT&amp;CK Framework (https://attack.mitre.org)
+csvMITRE has been created to help collect a CSV-formatted version of the MITRE ATT&amp;CK Framework (https://attack.mitre.org)
 <br><br>
 
 
 <!-- USAGE EXAMPLES -->
 ## Usage
-`python3 collectMITRE.py [-h] [-v]`
+`python3 csvMITRE.py [-h] [-v]`
 ### Example
-`python3 collectMITRE.py -v`
+`python3 csvMITRE.py -v`
 <br><br>
 
 
@@ -80,7 +80,7 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ezaspy - ezaspython (at) gmail (dot) com
 
-Project Link: [https://github.com/ezaspy/collectMITRE](https://github.com/ezaspy/collectMITRE)
+Project Link: [https://github.com/ezaspy/csvMITRE](https://github.com/ezaspy/csvMITRE)
 <br><br>
 
 
