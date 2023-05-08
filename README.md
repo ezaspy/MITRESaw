@@ -1,25 +1,25 @@
 <!-- PROJECT LOGO -->
 <p align="center">
-  <h1 align="center">csvMITRE</h1>
+  <h1 align="center">OpMITRE</h1>
   <p align="center">
-    Collect all of MITRE ATT&amp;CK Framework into CSV
+    Collect all of MITRE ATT&amp;CK Framework into CSV, and beyond.
     <br><br>
     <a href="https://mit-license.org">
-      <img src="https://img.shields.io/github/license/ezaspy/csvMITRE" alt="License: MIT">
+      <img src="https://img.shields.io/github/license/ezaspy/OpMITRE" alt="License: MIT">
     </a>
-    <a href="https://github.com/ezaspy/csvMITRE/issues">
-      <img src="https://img.shields.io/github/issues/ezaspy/csvMITRE" alt="Issues">
+    <a href="https://github.com/ezaspy/OpMITRE/issues">
+      <img src="https://img.shields.io/github/issues/ezaspy/OpMITRE" alt="Issues">
     </a>
-    <a href="https://github.com/ezaspy/csvMITRE/network/members">
-      <img src="https://img.shields.io/github/forks/ezaspy/csvMITRE" alt="Forks">
-    <a href="https://github.com/ezaspy/csvMITRE/stargazers">
-      <img src="https://img.shields.io/github/stars/ezaspy/csvMITRE" alt="Stars">
+    <a href="https://github.com/ezaspy/OpMITRE/network/members">
+      <img src="https://img.shields.io/github/forks/ezaspy/OpMITRE" alt="Forks">
+    <a href="https://github.com/ezaspy/OpMITRE/stargazers">
+      <img src="https://img.shields.io/github/stars/ezaspy/OpMITRE" alt="Stars">
     </a>
     <a href="https://www.python.org">
       <img src="https://img.shields.io/badge/language-python-pink" alt="Python">
     </a>
     </a>
-      <img src="https://img.shields.io/github/last-commit/ezaspy/csvMITRE" alt="Last Commit">
+      <img src="https://img.shields.io/github/last-commit/ezaspy/OpMITRE" alt="Last Commit">
     </a>
     <a href="https://github.com/psf/black">
       <img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg">
@@ -40,48 +40,28 @@
 
 
 <br><br>
+
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-csvMITRE has been created to help collect a CSV-formatted version of the MITRE ATT&amp;CK Framework (https://attack.mitre.org)
+OpMITRE collects a CSV-formatted version of the MITRE ATT&amp;CK Framework (https://attack.mitre.org). It also provides keyword searching and Threat Actor prioritisation.<br>
+Note the usage examples for keyword searching below.
 <br><br>
 
 
 <!-- USAGE EXAMPLES -->
 ## Usage
-`python3 csvMITRE.py [-h] [-v]`
+`python3 OpMITRE.py [-h] [-j] [-n{ keyword{,keyword}}] [-s] [-t]`
 ### Example
-`python3 csvMITRE.py -v`
+`python3 OpMITRE.py -t`
+### Example
+`python3 OpMITRE.py -t -n mining,technology,defense,law`
 <br><br>
 
+### Notices
 
-<!-- CONTRIBUTING -->
-## Contributing
-
-Contributions are what make the open source community such an amazing place to be learn, inspire, and create. Any contributions you make are **greatly appreciated**.
-
-1. Fork the Project
-2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the Branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-<br><br>
-
-
-<!-- LICENSE -->
-## License
-
-Distributed under the MIT License. See `LICENSE` for more information.
-<br><br>
-
-
-<!-- CONTACT -->
-## Contact
-
-ezaspy - ezaspython (at) gmail (dot) com
-
-Project Link: [https://github.com/ezaspy/csvMITRE](https://github.com/ezaspy/csvMITRE)
-<br><br>
+Because the MITRE ATT&amp;CK has been built and is managed in the United States, the keywords provided need to be in US English, as opposed UK English. An example where results would not reflect the search terms provided is the word defense (US)/defence (UK).
+<br><br><br>
 
 
 <!-- ACKNOWLEDGEMENTS -->
