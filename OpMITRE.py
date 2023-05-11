@@ -715,6 +715,8 @@ def main():
     time.sleep(0.5)
     if splitbyTA:
         clean_csv_rows()
+    else:
+        pass
     if nav_terms:
         """groups_page = str(
             urllib.request.urlopen(
