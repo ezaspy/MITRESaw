@@ -67,11 +67,9 @@ OpMITRE creates a CSV-formatted version of the [MITRE ATT&amp;CK Framework](http
 
 <!-- USAGE EXAMPLES -->
 ## Usage
-`python3 OpMITRE.py [-h] [-q] [-s] [-t [keyword,keyword,keyword]]`
+`python3 MITRESaw.py platforms searchterms threatgroups [-q] [-t]`
 ### Example
-`python3 OpMITRE.py -t`
-### Example
-`python3 OpMITRE.py -q -t mining,technology,defense,law`
+`python3 MITRESaw.py Windows,Linux,macOS mining,technology,defense,law . -q`
 <br><br>
 
 ### Notices
