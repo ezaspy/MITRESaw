@@ -2,7 +2,7 @@
 <p align="center">
   <h1 align="center">OpMITRE</h1>
   <p align="center">
-    Collect all of MITRE ATT&amp;CK Framework into CSV, and beyond.
+    Collect MITRE ATT&amp;CK framework for Enterprise into CSV and JSON, for ATTACK Navigator.
     <br><br>
     <a href="https://mit-license.org">
       <img src="https://img.shields.io/github/license/ezaspy/OpMITRE" alt="License: MIT">
@@ -44,18 +44,17 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-OpMITRE collects a CSV-formatted version of the MITRE ATT&amp;CK Framework (https://attack.mitre.org). It also provides keyword searching and Threat Actor prioritisation.<br>
-Note the usage examples for keyword searching below.
+OpMITRE creates a CSV-formatted version of the [MITRE ATT&amp;CK Framework](https://attack.mitre.org) and outputs individual [ATT&amp;CK Navigator](https://mitre-attack.github.io/attack-navigator/) JSON files, depending on keywords provided.<br>
 <br><br>
 
 
 <!-- USAGE EXAMPLES -->
 ## Usage
-`python3 OpMITRE.py [-h] [-j] [-n{ keyword{,keyword}}] [-s] [-t]`
+`python3 OpMITRE.py [-h] [-q] [-s] [-t [keyword,keyword,keyword]]`
 ### Example
 `python3 OpMITRE.py -t`
 ### Example
-`python3 OpMITRE.py -t -n mining,technology,defense,law`
+`python3 OpMITRE.py -q -t mining,technology,defense,law`
 <br><br>
 
 ### Notices
