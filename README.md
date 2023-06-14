@@ -22,21 +22,21 @@
     Collect MITRE ATT&amp;CK framework for Enterprise into CSV and JSON, for ATTACK Navigator.
     <br><br>
     <a href="https://mit-license.org">
-      <img src="https://img.shields.io/github/license/ezaspy/OpMITRE" alt="License: MIT">
+      <img src="https://img.shields.io/github/license/ezaspy/MITRESaw" alt="License: MIT">
     </a>
-    <a href="https://github.com/ezaspy/OpMITRE/issues">
-      <img src="https://img.shields.io/github/issues/ezaspy/OpMITRE" alt="Issues">
+    <a href="https://github.com/ezaspy/MITRESaw/issues">
+      <img src="https://img.shields.io/github/issues/ezaspy/MITRESaw" alt="Issues">
     </a>
-    <a href="https://github.com/ezaspy/OpMITRE/network/members">
-      <img src="https://img.shields.io/github/forks/ezaspy/OpMITRE" alt="Forks">
-    <a href="https://github.com/ezaspy/OpMITRE/stargazers">
-      <img src="https://img.shields.io/github/stars/ezaspy/OpMITRE" alt="Stars">
+    <a href="https://github.com/ezaspy/MITRESaw/network/members">
+      <img src="https://img.shields.io/github/forks/ezaspy/MITRESaw" alt="Forks">
+    <a href="https://github.com/ezaspy/MITRESaw/stargazers">
+      <img src="https://img.shields.io/github/stars/ezaspy/MITRESaw" alt="Stars">
     </a>
     <a href="https://www.python.org">
       <img src="https://img.shields.io/badge/language-python-pink" alt="Python">
     </a>
     </a>
-      <img src="https://img.shields.io/github/last-commit/ezaspy/OpMITRE" alt="Last Commit">
+      <img src="https://img.shields.io/github/last-commit/ezaspy/MITRESaw" alt="Last Commit">
     </a>
     <a href="https://github.com/psf/black">
       <img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg">
@@ -61,7 +61,7 @@
 <!-- ABOUT THE PROJECT -->
 ## About The Project
 
-OpMITRE creates a CSV-formatted version of the [MITRE ATT&amp;CK Framework](https://attack.mitre.org) and outputs individual [ATT&amp;CK Navigator](https://mitre-attack.github.io/attack-navigator/) JSON files, depending on keywords provided.<br>
+MITRESaw creates a CSV-formatted version of the [MITRE ATT&amp;CK Framework](https://attack.mitre.org) and outputs individual [ATT&amp;CK Navigator](https://mitre-attack.github.io/attack-navigator/) JSON files, depending on keywords provided.<br>
 <br><br>
 
 
