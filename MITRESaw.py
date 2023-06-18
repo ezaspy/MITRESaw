@@ -24,9 +24,9 @@ parser.add_argument(
     help="Filter Threat Actor results based on specific industries e.g. mining,technology,defense,law (use _ instead of spaces)\n Use . to not filter i.e. obtain all Threat Actors\n\n",
 )
 parser.add_argument(
-    "threatgroups",
+    "groupsorsoftware",
     nargs=1,
-    help="Filter Threat Actor results based on specific group names e.g. APT29,HAFNIUM,Lazurus_Group,Turla (use _ instead of spaces)\n Use . to not filter i.e. obtain all Threat Actors\n",
+    help="Filter Threat Actor results based on specific group names and/or Software e.g. APT29,HAFNIUM,Lazurus_Group,Turla,AppleJeus,Brute Ratel C4 (use _ instead of spaces)\n Use . to not filter i.e. obtain all Threat Actors\n",
 )
 parser.add_argument(
     "-q",
@@ -49,13 +49,20 @@ parser.add_argument(
 args = parser.parse_args()
 operating_platforms = args.platforms
 search_terms = args.searchterms
-actor_groups = args.threatgroups
+softwareorgroups = args.groupsorsoftware
 queries = args.queries
 truncate = args.truncate
 
 attack_framework = "enterprise"
 attack_version = "13.1"
-sheet_tabs = ["techniques-techniques", "groups-groups", "groups-techniques used"]
+sheet_tabs = [
+    "techniques-techniques",
+    "techniques-procedure examples",
+    "groups-groups",
+    "groups-techniques used",
+    "software-software",
+    "software-techniques used",
+]
 port_indicators = []
 evts_indicators = []
 terms_indicators = []
@@ -73,10 +80,6 @@ def print_saw(saw, tagline, spacing):
         subprocess.Popen(["clear"]).communicate()
         print(tagline)
         print(re.sub(r"(@[\S\s])", r"", saw))
-        time.sleep(0.1)
-        subprocess.Popen(["clear"]).communicate()
-        print(tagline)
-        print(re.sub(r"(@[\S\s]{2})", r"", saw))
         time.sleep(0.1)
         subprocess.Popen(["clear"]).communicate()
         print(tagline)
@@ -161,52 +164,115 @@ def print_saw(saw, tagline, spacing):
         subprocess.Popen(["clear"]).communicate()
         print(tagline)
         print(re.sub(r"(@[\S\s]{42})", r"", saw))
-        time.sleep(0.1)
-        subprocess.Popen(["clear"]).communicate()
-        print(tagline)
-        print(re.sub(r"(@[\S\s]{44})", r"", saw))
-        time.sleep(0.1)
-        subprocess.Popen(["clear"]).communicate()
-        print(tagline)
-        print(re.sub(r"(@[\S\s]{46})", r"", saw))
-        time.sleep(0.1)
-        subprocess.Popen(["clear"]).communicate()
-        print(tagline)
-        print(re.sub(r"(@[\S\s]{48})", r"", saw))
-        time.sleep(0.1)
-        subprocess.Popen(["clear"]).communicate()
-        print(tagline)
-        print(re.sub(r"(@[\S\s]{50})", r"", saw))
-        time.sleep(0.1)
-        subprocess.Popen(["clear"]).communicate()
-        print(tagline)
-        print(re.sub(r"(@[\S\s]{52})", r"", saw))
-        time.sleep(0.1)
-        subprocess.Popen(["clear"]).communicate()
-        print(tagline)
-        print(re.sub(r"(@[\S\s]{54})", r"", saw))
-        time.sleep(0.1)
-        subprocess.Popen(["clear"]).communicate()
-        print(tagline)
-        print(re.sub(r"(@[\S\s]{56})", r"", saw))
-        time.sleep(0.1)
-        subprocess.Popen(["clear"]).communicate()
-        print(tagline)
-        print(re.sub(r"(@[\S\s]{58})", r"", saw))
         time.sleep(0.2)
     else:
         pass
 
 
-def extract_port_indicators(
-    technique_findings,
-    technique_id,
+def report_finding_to_stdout(
     technique_name,
+    software_group_name,
+    evidence_type,
+    identifiers,
+    software_group_terms,
+    terms,
+    truncate,
+):
+    if evidence_type == "ports":
+        evidence_insert = " port(s): "
+        identifiers = re.findall(r"\d+", str(identifiers))
+    elif evidence_type == "evt":
+        evidence_insert = " event log ID(s): "
+        identifiers = re.findall(r"\d+", str(identifiers))
+    else:
+        evidence_insert = ": "
+    if str(terms) != "['.']":
+        extracted_terms = re.findall(r"\w+", str(software_group_terms))
+        software_group_terms_insert = sorted(list(set(extracted_terms)))
+        terms_insert = " -> '\033[1;36m{}\033[1;m' ->".format(
+            str(software_group_terms_insert)[2:-2]
+            .replace("_", " ")
+            .replace("', '", "\033[1;m', '\033[1;36m")
+        )
+    else:
+        terms_insert = " ->"
+    identifiers = (
+        str(identifiers)[2:-2]
+        .replace("\\\\\\\\\\\\\\\\", "\\\\\\\\")
+        .replace("\\\\\\\\", "\\\\")
+    )
+    print_statement = "      -> '\033[1;33m{}\033[1;m'{} '\033[1;35m{}\033[1;m'{}'\033[1;31m{}\033[1;m'".format(
+        software_group_name,
+        terms_insert,
+        technique_name,
+        evidence_insert,
+        identifiers.replace("', '", "\033[1;m', '\033[1;31m"),
+    )
+    if truncate:
+        print(print_statement.split(": ")[0])
+    else:
+        print(print_statement)
+    time.sleep(0.2)
+    return identifiers.replace("', '", "++")
+
+
+def extract_port_indicators(description):
+    description = re.sub(
+        r"\(Citation[^\)]+\)",
+        r"",
+        re.sub(r"\[([^\]]+)\]\([^\)]+\)", r"\1", description),
+    )
+    description = (
+        description.replace('""', '"')
+        .replace(". . ", ". ")
+        .replace(".. ", ". ")
+        .replace("\\\\\\'", "'")
+        .replace("\\\\'", "'")
+        .replace("\\'", "'")
+        .strip(",")
+        .strip('"')
+        .strip(",")
+        .strip('"')
+    )
+    port_identifiers = re.findall(
+        r"(?:(?:[Pp]orts?(?: of)? |and |& |or |, |e\.g\.? |tcp: ?|udp: ?)|(?:\())(\d{2,})(?: |/|\. |,|\<)",
+        description,
+    )
+    port_identifiers = list(
+        filter(
+            lambda port: "365" != port,
+            list(filter(lambda port: "10" != port, port_identifiers)),
+        )
+    )  # remove string from list
+    return port_identifiers
+
+
+def extract_evt_indicators(description):
+    description = re.sub(
+        r"\(Citation[^\)]+\)",
+        r"",
+        re.sub(r"\[([^\]]+)\]\([^\)]+\)", r"\1", description),
+    )
+    description = (
+        description.replace('""', '"')
+        .replace(". . ", ". ")
+        .replace(".. ", ". ")
+        .replace("\\\\\\'", "'")
+        .replace("\\\\'", "'")
+        .replace("\\'", "'")
+        .strip(",")
+        .strip('"')
+        .strip(",")
+        .strip('"')
+    )
+    evt_identifiers = re.findall(
+        r"(?:(?:Event ?|E)I[Dd]( ==)? ?\"?(\d{1,5}))", description
+    )
+    return evt_identifiers
+
+
+def extract_reg_indicators(
     description,
-    threat_actor,
-    threat_actor_method_description,
-    data_sources,
-    actor_terms,
 ):
     description = re.sub(
         r"\(Citation[^\)]+\)",
@@ -225,205 +291,19 @@ def extract_port_indicators(
         .strip(",")
         .strip('"')
     )
-    # description = re.sub(r"`([^`]+)`", r"<code>\1</code>", description)
-    port_identifiers = re.findall(
-        r"(?:(?:[Pp]orts?(?: of)? |and |& |or |, |e\.g\.? |tcp: ?|udp: ?)|(?:\())(\d{2,})(?: |/|\. |,|\<)",
-        description,
-    )
-    port_identifiers = list(
-        filter(
-            lambda port: "365" != port,
-            list(filter(lambda port: "10" != port, port_identifiers)),
-        )
-    )  # remove string from list
-    if len(port_identifiers) > 0:
-        if actor_terms != "*":
-            print_insert = "target '{}' using".format(actor_terms.replace("_", " "))
-        else:
-            print_insert = "use"
-        print_statement = (
-            "   -> '{}' has been known to {} '{}'; detectable via: {}".format(
-                threat_actor, print_insert, technique_name, str(port_identifiers)[1:-1]
-            )
-        )
-    else:
-        print_statement = "-"
-    technique_findings.append(
-        "{}||{}||{}||{}||{}||ports||{}||{}||{}||{}".format(
-            technique_id,
-            technique_name,
-            threat_actor,
-            "||".join(threat_actor_method_description.split("||")[0:-1]),
-            actor_terms.replace("_", " "),
-            description.split(" && ")[1],
-            str(list(set(port_identifiers))),
-            data_sources,
-            print_statement,
-        )
-    )
-    return technique_findings, "ports"
-
-
-def extract_evt_indicators(
-    technique_findings,
-    technique_id,
-    technique_name,
-    description,
-    threat_actor,
-    threat_actor_method_description,
-    data_sources,
-    actor_terms,
-):
-    evt_identifiers = re.findall(
-        r"(?:(?:Event ?|E)I[Dd]( ==)? ?\"?(\d{1,5}))", description
-    )
-    evt_results = []
-    wel_identifiers = list(set(evt_identifiers))
-    for identifier_set in wel_identifiers:
-        for each_identifier in identifier_set:
-            if (
-                len(each_identifier) > 0
-                and "](https://attack.mitre.org/" not in each_identifier
-                and "example" not in each_identifier.lower()
-                and "citation" not in each_identifier.lower()
-                and not each_identifier.startswith(")")
-                and not each_identifier.endswith("(")
-            ):
-                evt_results.append(each_identifier)
-            else:
-                pass
-    if len(evt_results) > 0:
-        if actor_terms != "*":
-            print_insert = "target '{}' using".format(actor_terms.replace("_", " "))
-        else:
-            print_insert = "use"
-        print_statement = (
-            "   -> '{}' has been known to {} '{}'; detectable via: {}".format(
-                threat_actor, print_insert, technique_name, str(evt_results)[1:-1]
-            )
-        )
-    else:
-        print_statement = "-"
-    technique_findings.append(
-        "{}||{}||{}||{}||{}||evts||{}||{}||{}||{}".format(
-            technique_id,
-            technique_name,
-            threat_actor,
-            "||".join(threat_actor_method_description.split("||")[0:-1]),
-            actor_terms.replace("_", " "),
-            description.split(" && ")[1],
-            evt_results,
-            data_sources,
-            print_statement,
-        )
-    )
-    return technique_findings, "evts"
-
-
-def extract_reg_indicators(
-    technique_findings,
-    technique_id,
-    technique_name,
-    description,
-    threat_actor,
-    threat_actor_method_description,
-    data_sources,
-    actor_terms,
-):
     reg_identifiers = re.findall(
         r"([Hh][Kk](?:[Ll][Mm]|[Cc][Uu]|[Ee][Yy])[^\{\}!$<>`]+)", description
     )
     registry_identifiers = list(set(reg_identifiers))
-    if len(registry_identifiers) > 0:
-        if actor_terms != "*":
-            print_insert = "target '{}' using".format(actor_terms.replace("_", " "))
-        else:
-            print_insert = "use"
-        print_statement = (
-            "   -> '{}' has been known to {} '{}'; detectable via: {}".format(
-                threat_actor,
-                print_insert,
-                technique_name,
-                str(registry_identifiers)[1:-1]
-                .lower()
-                .replace("\\\\\\\\\\\\\\\\", "\\\\\\\\")
-                .replace("\\\\\\\\\\\\", "\\\\\\")
-                .replace("\\\\\\\\", "\\\\")
-                .replace("hkey_local_machine", "hklm")
-                .replace("hkey_current_user", "hkcu")
-                .replace("£\\\\t£", "\\\\t")
-                .replace('""', '"')
-                .replace("  ", " ")
-                .replace("[.]", ".")
-                .replace("[:]", ":")
-                .replace("&#42;", "*")
-                .replace("&lbrace;", "{")
-                .replace("&rbrace;", "}")
-                .replace("[username]", "%%username%%")
-                .replace("\\]\\", "]\\")
-                .replace("“", '"')
-                .replace("”", '"')
-                .strip("\\"),
-            )
-        )
-    else:
-        print_statement = "-"
-    technique_findings.append(
-        "{}||{}||{}||{}||{}||regs||{}||{}||{}||{}".format(
-            technique_id,
-            technique_name,
-            threat_actor,
-            "||".join(threat_actor_method_description.split("||")[0:-1]),
-            actor_terms.replace("_", " "),
-            description.split(" && ")[1],
-            str(registry_identifiers)[1:-1]
-            .lower()
-            .replace("\\\\\\\\\\\\\\\\", "\\\\\\\\")
-            .replace("\\\\\\\\\\\\", "\\\\\\")
-            .replace("\\\\\\\\", "\\\\")
-            .replace("hkey_local_machine", "hklm")
-            .replace("hkey_current_user", "hkcu")
-            .replace("£\\\\t£", "\\\\t")
-            .replace('""', '"')
-            .replace("  ", " ")
-            .replace("[.]", ".")
-            .replace("[:]", ":")
-            .replace("&#42;", "*")
-            .replace("&lbrace;", "{")
-            .replace("&rbrace;", "}")
-            .replace("[username]", "%%username%%")
-            .replace("\\]\\", "]\\")
-            .replace("“", '"')
-            .replace("”", '"')
-            .strip("\\"),
-            data_sources,
-            print_statement.replace("£\\\\t£", "\\\\t")
-            .replace('""', '"')
-            .replace("[username]", "%%username%%")
-            .replace("\\]\\", "]\\")
-            .replace("“", '"')
-            .replace("”", '"')
-            .strip("\\"),
-        )
-    )
-    return technique_findings, "reg"
+    return registry_identifiers
 
 
-def extract_cmd_indicators(
-    technique_findings,
-    technique_id,
-    technique_name,
-    description,
-    threat_actor,
-    threat_actor_method_description,
-    data_sources,
-    actor_terms,
-):
+def extract_cmd_indicators(description):
     terms_identifiers = re.findall(
-        r"(?:(?:<code> ?([^\{\}!$<>`]{3,}) ?</code>)|(?:` ?([^\{\}!$<>`]{3,}) ?`)|(?:\[ ?([^\{\}!$<>`]{3,}) ?\]\(https://attack\.mitre\.org/software))",
+        r"(?:(?:<code> ?([^\{\}!$<>`]{3,}) ?<\/code>)|(?:` ?([^\{\}!$<>`]{3,}) ?`)|(?:\[ ?([^\{\}!$<>`]{3,}) ?\]\(https:\/\/attack\.mitre\.org\/software))",
         description,
     )
-    terms_results = []
+    cmd_identifiers = []
     all_identifiers = list(set(terms_identifiers))
     for identifier_set in all_identifiers:
         for each_identifier in identifier_set:
@@ -448,7 +328,7 @@ def extract_cmd_indicators(
                 and not each_identifier.startswith("[HKEY")
                 and not each_identifier == ", and "
             ):
-                terms_results.append(
+                cmd_identifiers.append(
                     each_identifier.lower()
                     .replace("\\\\\\\\\\\\\\\\", "\\\\\\\\")
                     .replace("\\\\\\\\\\\\", "\\\\\\")
@@ -469,363 +349,261 @@ def extract_cmd_indicators(
                 )
             else:
                 pass
-    if len(terms_results) > 0:
-        if actor_terms != "*":
-            print_insert = "target '{}' using".format(actor_terms.replace("_", " "))
-        else:
-            print_insert = "use"
-        print_statement = (
-            "   -> '{}' has been known to {} '{}'; detectable via: {}".format(
-                threat_actor,
-                print_insert,
-                technique_name,
-                str(terms_results)[1:-1]
-                .lower()
-                .replace("\\\\\\\\\\\\\\\\", "\\\\\\\\")
-                .replace("\\\\\\\\\\\\", "\\\\\\")
-                .replace("\\\\\\\\", "\\\\")
-                .replace("£\\\\t£", "\\\\t")
-                .replace('""', '"')
-                .replace("[username]", "%%username%%")
-                .replace("\\]\\", "]\\")
-                .replace("“", '"')
-                .replace("”", '"')
-                .strip("\\"),
-            )
-        )
-    else:
-        print_statement = "-"
-    technique_findings.append(
-        "{}||{}||{}||{}||{}||terms||{}||{}||{}||{}".format(
-            technique_id,
-            technique_name,
-            threat_actor,
-            "||".join(threat_actor_method_description.split("||")[0:-1]),
-            actor_terms.replace("_", " "),
-            description.split(" && ")[1],
-            terms_results,
-            data_sources,
-            print_statement,
-        )
-    )
-    return technique_findings, "terms"
+    return cmd_identifiers
 
 
-def extract_indicators(
-    truncate,
-    technique_id,
-    technique_name,
-    threat_actor,
-    actor_techniques_used,
-    description,
-    detection,
-    data_sources,
-    actor_terms,
+def extract_indicators( # replace quotes in "reg" add 
+    valid_procedure,
+    terms,
+    evidence_found,
+    identifiers,
     previous_findings,
+    truncate,
 ):
-    technique_findings = []
-    if "{}||{}||{}||".format(technique_id, technique_name, threat_actor) in str(
-        actor_techniques_used
-    ):  # check if threat_actor matches entry in associated_threat_actors and retain contextual information
-        threat_actor_method_description = (
-            str(actor_techniques_used)
-            .split(
-                "{}||{}||{}||".format(
-                    technique_id,
-                    technique_name,
-                    threat_actor,
+    software_group_name = valid_procedure.split("||")[1]
+    technique_id = valid_procedure.split("||")[2]
+    technique_name = valid_procedure.split("||")[3]
+    software_group_usage = valid_procedure.split("||")[4]
+    software_group_terms = valid_procedure.split("||")[6]
+    technique_description = valid_procedure.split("||")[7]
+    technique_detection = valid_procedure.split("||")[8]
+    description = "{}||{}||{}".format(
+        software_group_usage, technique_description, technique_detection
+    )
+    # extracting ports
+    port_identifiers = extract_port_indicators(description)
+    if len(port_identifiers) > 0:
+        evidence_type = "ports"
+        evidence = "{}||{}||{}".format(
+            valid_procedure,
+            evidence_type,
+            str(port_identifiers),
+        )
+        if "{}||{}||{}||{}".format(
+            technique_id, technique_name, software_group_name, evidence_type
+        ) not in str(previous_findings):
+            identifiers = report_finding_to_stdout(
+                technique_name,
+                software_group_name,
+                evidence_type,
+                port_identifiers,
+                software_group_terms,
+                terms,
+                truncate,
+            )
+            previous_findings[
+                "{}||{}||{}||{}".format(
+                    technique_id, technique_name, software_group_name, evidence_type
                 )
-            )[1]
-            .split("',")[0]
-        )
-        # extracting ports
-        (
-            technique_findings,
-            evidence_type,
-        ) = extract_port_indicators(
-            technique_findings,
-            technique_id,
-            technique_name,
-            "{} && {}".format(
-                description,
-                detection.replace("..  ", ".  "),
-            ),
-            threat_actor,
-            threat_actor_method_description,
-            data_sources,
-            actor_terms,
-        )
-        (
-            technique_findings,
-            evidence_type,
-        ) = extract_port_indicators(
-            technique_findings,
-            technique_id,
-            technique_name,
-            threat_actor_method_description.replace("||", " && "),
-            threat_actor,
-            threat_actor_method_description,
-            data_sources,
-            actor_terms,
-        )
-        # extracting event IDs
-        if (
-            "Event ID" in description
-            or "EID" in description
-            or "EventId" in description
-            or "Event ID" in detection
-            or "EID" in detection
-            or "EventId" in detection
-        ):  # extracting from technique description
-            (
-                technique_findings,
+            ] = "-"
+            evidence = "{}||{}||{}".format(
+                valid_procedure,
                 evidence_type,
-            ) = extract_evt_indicators(
-                technique_findings,
-                technique_id,
-                technique_name,
-                "{} && {}".format(
-                    description,
-                    detection.replace("..  ", ".  "),
-                ),
-                threat_actor,
-                threat_actor_method_description,
-                data_sources,
-                actor_terms,
+                identifiers,
             )
+            evidence_found.append(evidence)
         else:
             pass
-        if (
-            "Event ID" in threat_actor_method_description
-            or "EID" in threat_actor_method_description
-            or "EventId" in threat_actor_method_description
-        ):  # extracting from threat actor description
-            (
-                technique_findings,
-                evidence_type,
-            ) = extract_evt_indicators(
-                technique_findings,
-                technique_id,
-                technique_name,
-                threat_actor_method_description.replace("||", " && "),
-                threat_actor,
-                threat_actor_method_description,
-                data_sources,
-                actor_terms,
-            )
-        else:
-            pass
-        # extracting registry artefacts
-        if (
-            "hklm\\" in description
-            or "hkcu\\" in description
-            or "HKLM\\" in description
-            or "HKCU\\" in description
-            or "hkey_local_machine\\" in description
-            or "hkey_current_user\\" in description
-            or "HKEY_LOCAL_MACHINE\\" in description
-            or "HKEY_CURRENT_USER\\" in description
-            or "hklm]" in description
-            or "hkcu]" in description
-            or "HKLM]" in description
-            or "HKCU]" in description
-            or "hkey_local_machine]" in description
-            or "hkey_current_user]" in description
-            or "HKEY_LOCAL_MACHINE]" in description
-            or "HKEY_CURRENT_USER]" in description
-        ):  # extracting from technique description
-            (
-                technique_findings,
-                evidence_type,
-            ) = extract_reg_indicators(
-                technique_findings,
-                technique_id,
-                technique_name,
-                "{} && {}".format(
-                    description,
-                    detection.replace("..  ", ".  "),
-                ),
-                threat_actor,
-                threat_actor_method_description,
-                data_sources,
-                actor_terms,
-            )
-        else:
-            pass
-        if (
-            "hklm\\" in threat_actor_method_description
-            or "hkcu\\" in threat_actor_method_description
-            or "HKLM\\" in threat_actor_method_description
-            or "HKCU\\" in threat_actor_method_description
-            or "hkey_local_machine\\" in threat_actor_method_description
-            or "hkey_current_user\\" in threat_actor_method_description
-            or "HKEY_LOCAL_MACHINE\\" in threat_actor_method_description
-            or "HKEY_CURRENT_USER\\" in threat_actor_method_description
-            or "hklm]" in threat_actor_method_description
-            or "hkcu]" in threat_actor_method_description
-            or "HKLM]" in threat_actor_method_description
-            or "HKCU]" in threat_actor_method_description
-            or "hkey_local_machine]" in threat_actor_method_description
-            or "hkey_current_user]" in threat_actor_method_description
-            or "HKEY_LOCAL_MACHINE]" in threat_actor_method_description
-            or "HKEY_CURRENT_USER]" in threat_actor_method_description
-        ):  # extracting from threat actor description
-            (
-                technique_findings,
-                evidence_type,
-            ) = extract_reg_indicators(
-                technique_findings,
-                technique_id,
-                technique_name,
-                threat_actor_method_description.replace("||", " && "),
-                threat_actor,
-                threat_actor_method_description,
-                data_sources,
-                actor_terms,
-            )
-        else:
-            pass
-        # extracting commands
-        if (
-            "<code>" in description or "`" in description
-        ):  # extracting from technique description
-            (
-                technique_findings,
-                evidence_type,
-            ) = extract_cmd_indicators(
-                technique_findings,
-                technique_id,
-                technique_name,
-                "{} && {}".format(
-                    description,
-                    detection.replace("..  ", ".  "),
-                ),
-                threat_actor,
-                threat_actor_method_description,
-                data_sources,
-                actor_terms,
-            )
-        else:
-            pass
-        if (
-            "<code>" in threat_actor_method_description
-            or "`" in threat_actor_method_description
-        ):  # extracting from threat actor description
-            (
-                technique_findings,
-                evidence_type,
-            ) = extract_cmd_indicators(
-                technique_findings,
-                technique_id,
-                technique_name,
-                threat_actor_method_description.replace("||", " && "),
-                threat_actor,
-                threat_actor_method_description,
-                data_sources,
-                actor_terms,
-            )
-        else:
-            pass
-        if len(technique_findings) > 0:
-            for each_finding in technique_findings:
-                print_statement = str(each_finding).split("||")[-1].replace("\\'", "'")
-                if print_statement != "-":
-                    cleaned_statement = print_statement.replace(
-                        "\\\\\\\\", "\\\\"
-                    ).replace("", "")
-                    if "'; detectable via" in cleaned_statement:
-                        (
-                            statement_prefix,
-                            statement_suffix,
-                        ) = cleaned_statement.split("'; detectable via")
-                        if (
-                            "{}::{}".format(
-                                threat_actor,
-                                technique_name,
-                            ),
-                            "{}::{}".format(
-                                evidence_type,
-                                statement_suffix[0:-1]
-                                .replace("', \"", "', '")
-                                .replace("\", '", "', '"),
-                            ),
-                        ) not in previous_findings.items():
-                            if each_finding.split("||")[-5] == "ports":
-                                print_insert = " Port(s)"
-                            elif each_finding.split("||")[-5] == "evts":
-                                print_insert = " Event ID(s)"
-                            else:
-                                print_insert = ""
-                            statement_insert = "'\033[1;36m{}\033[1;m'".format(
-                                statement_prefix.split("target '")[1]
-                                .split("' using")[0]
-                                .replace("', '", "\033[1;m', '\033[1;36m")
-                            )
-                            statement_prefix = "     -> '\033[1;33m{}\033[1;m' -> {} -> '\033[1;32m{}\033[1;m".format(
-                                statement_prefix.split("'")[1],
-                                statement_insert,
-                                statement_prefix.split("'")[-1],
-                            )
-                            if not truncate:
-                                print(
-                                    "{}'; detectable via{}{}\033[1;m'".format(
-                                        statement_prefix,
-                                        print_insert,
-                                        statement_suffix[0:-1]
-                                        .replace("', \"", "', '")
-                                        .replace("\", '", "', '")
-                                        .replace(
-                                            ": '",
-                                            ": '\033[1;31m",
-                                        )
-                                        .replace(
-                                            "', '",
-                                            "\033[1;m', '\033[1;31m",
-                                        )
-                                        .strip("\\"),
-                                    )
-                                )
-                            else:
-                                print("{}'".format(statement_prefix))
-                            previous_findings[
-                                "{}::{}".format(
-                                    threat_actor,
-                                    technique_name,
-                                )
-                            ] = "{}::{}".format(
-                                evidence_type,
-                                statement_suffix[0:-1]
-                                .replace("', \"", "', '")
-                                .replace("\", '", "', '"),
-                            )
-                            time.sleep(0.2)
-                    else:
-                        pass
-                    return technique_findings
-                else:
-                    pass
     else:
-        pass
+        evidence_type = ""
+    # extracting event IDs
+    if "Event ID" in description or "EID" in description or "EventId" in description:
+        evt_identifiers = extract_evt_indicators(description)
+    else:
+        evt_identifiers = []
+    if len(evt_identifiers) > 0:
+        evidence_type = "evt"
+        evidence = "{}||{}||{}".format(
+            valid_procedure,
+            evidence_type,
+            str(evt_identifiers),
+        )
+        if "{}||{}||{}||{}".format(
+            technique_id, technique_name, software_group_name, evidence_type
+        ) not in str(previous_findings):
+            identifiers = report_finding_to_stdout(
+                technique_name,
+                software_group_name,
+                evidence_type,
+                evt_identifiers,
+                software_group_terms,
+                terms,
+                truncate,
+            )
+            previous_findings[
+                "{}||{}||{}||{}".format(
+                    technique_id, technique_name, software_group_name, evidence_type
+                )
+            ] = "-"
+            evidence = "{}||{}||{}".format(
+                valid_procedure,
+                evidence_type,
+                identifiers,
+            )
+            evidence_found.append(evidence)
+        else:
+            pass
+    else:
+        evidence_type = ""
+    # extracting registry artefacts
+    if (
+        "hklm\\" in description.lower()
+        or "hkcu\\" in description.lower()
+        or "hkey\\" in description.lower()
+        or "hkey_" in description.lower()
+        or "hklm]" in description.lower()
+        or "hkcu]" in description.lower()
+        or "hkey_local_machine]" in description.lower()
+        or "hkey_current_user]" in description.lower()
+    ):
+        reg_identifiers = extract_reg_indicators(description)
+    else:
+        reg_identifiers = []
+    if len(reg_identifiers) > 0:
+        evidence_type = "reg"
+        evidence = "{}||{}||{}".format(
+            valid_procedure,
+            evidence_type,
+            str(reg_identifiers),
+        )
+        if "{}||{}||{}||{}".format(
+            technique_id, technique_name, software_group_name, evidence_type
+        ) not in str(previous_findings):
+            identifiers = report_finding_to_stdout(
+                technique_name,
+                software_group_name,
+                evidence_type,
+                reg_identifiers,
+                software_group_terms,
+                terms,
+                truncate,
+            )
+            previous_findings[
+                "{}||{}||{}||{}".format(
+                    technique_id, technique_name, software_group_name, evidence_type
+                )
+            ] = "-"
+            evidence = "{}||{}||{}".format(
+                valid_procedure,
+                evidence_type,
+                identifiers,
+            )
+            evidence_found.append(evidence)
+        else:
+            pass
+    else:
+        evidence_type = ""
+    # extracting commands
+    if "<code>" in description or "`" in description:
+        cmd_identifiers = extract_cmd_indicators(description)
+    else:
+        cmd_identifiers = []
+    if len(cmd_identifiers) > 0:
+        evidence_type = "cmd"
+        evidence = "{}||{}||{}".format(
+            valid_procedure,
+            evidence_type,
+            str(cmd_identifiers),
+        )
+        if "{}||{}||{}||{}".format(
+            technique_id, technique_name, software_group_name, evidence_type
+        ) not in str(previous_findings):
+            identifiers = report_finding_to_stdout(
+                technique_name,
+                software_group_name,
+                evidence_type,
+                cmd_identifiers,
+                software_group_terms,
+                terms,
+                truncate,
+            )
+            previous_findings[
+                "{}||{}||{}||{}".format(
+                    technique_id, technique_name, software_group_name, evidence_type
+                )
+            ] = "-"
+            evidence = "{}||{}||{}".format(
+                valid_procedure,
+                evidence_type,
+                identifiers,
+            )
+            evidence_found.append(evidence)
+        else:
+            pass
+    else:
+        evidence_type = ""
+    return evidence_found, identifiers, previous_findings
 
 
 def main():
-    time.sleep(0.5)
+    time.sleep(0.1)
+    print()
+    print("    -> Obtaining MITRE ATT&CK files...")
+    # obtaining framework
+    for sheet_tab in sheet_tabs:
+        sheet, tab = sheet_tab.split("-")
+        filename = "enterprise-attack-v{}-{}".format(attack_version, sheet)
+        spreadsheet = "{}.xlsx".format(filename)
+        if not os.path.exists(
+            "enterprise-attack-v{}/{}".format(attack_version, spreadsheet)
+        ):
+            mitre_spreadsheet = requests.get(
+                "https://attack.mitre.org/docs/enterprise-attack-v{}/{}".format(
+                    attack_version, spreadsheet
+                )
+            )
+            with open(spreadsheet, "wb") as spreadsheet_file:
+                spreadsheet_file.write(mitre_spreadsheet.content)
+        else:
+            pass
+        temp_csv = "{}temp.csv".format(filename)
+        xlsx_file = pandas.read_excel(spreadsheet, tab)
+        xlsx_file.to_csv(temp_csv, index=None, header=True)
+        with open(temp_csv) as csv_with_new_lines:
+            malformed_csv = str(csv_with_new_lines.readlines())[2:-2]
+            malformed_csv = re.sub(r"\\t", r"£\\t£", malformed_csv)
+            if "-groups" not in filename:
+                malformed_csv = re.sub(r"\\n', '(T\d{4})", r"\n\1", malformed_csv)
+                malformed_csv = re.sub(
+                    r"\\n['\"], ['\"]\\n['\"], ['\"]", r".  ", malformed_csv
+                )
+                formated_csv = malformed_csv
+            else:
+                malformed_csv = re.sub(r"\\n', '", r"\n", malformed_csv)
+                malformed_csv = re.sub(r"\n\"\\n', \"", r"\"\n", malformed_csv)
+                malformed_csv = re.sub(r"\n\"\n", r"\"\n", malformed_csv)
+                malformed_csv = re.sub(r"\n( ?[^G])", r"\1", malformed_csv)
+                malformed_csv = re.sub(r"\\n', \"", r"\"\n", malformed_csv)
+                malformed_csv = re.sub(r"\\n\", '", r"\"\n", malformed_csv)
+                formated_csv = malformed_csv.replace('\\"', '"')
+        with open(
+            "{}-{}.csv".format(filename, tab.replace(" ", "_")), "w"
+        ) as final_csv:
+            final_csv.write(formated_csv)
+        os.remove(temp_csv)
+    time.sleep(0.1)
     saw = """
-@                                                    ,╓▄▄#ΦN╥
-@                ╓▓▀▀▓                     ,╓▄▄▄▓▓███╫╫▓██▌╫▓
-@                ║▌,,▓▌           ,╦▄▄╦B▀▀██╫╫╫╫╫╫╫╫╫╫╫╫╫╫╫▓▓█▄
-@                 ▓████      ,▄███╫░░╫╫╫▓▓▄░╨███╫╫▀╜"╙█▓╫╫╫╫▓▓▓▓▄
-@                 ╙███╫▌,╥╦]Ñ░░░░░░░░╨▀╗▄▒▀█▓▄░▀╫U    █▀▀▓▓▓▓▓▓██▓╕
-@                  ▓Ñ░░░░░╦╫╫╫╫╫╫╫╫╫Ñ╦░░░░▀╦░▀▓╦░╨▓K╗▄,    ▀▓▓▓▓██▓▌
-@                 ,╦░░╫╫╫╫╫╫╫╫╫╫╫╫╫╫╫╫╫╫╫Ñ░░░╫░╫╫Ñ░╫╫╫╫N     ▀▓▓▓╫██▌
-@               ,]░░╫╫╫╫╫╫▓▓████████▓▓╫╫╫╫╫Ñ░░░µ░╠▄░░▄▄▄▒Ñ╥    ▀▓▓▓▓▓▌
-@   ╓▄▄▄╫█╫    ,Ñ░╫╫╫╫╫╫▓███████████████▓╫╫╫╫Ñ░░╬░╟▓░╟▓▓▓▌░     ╟▓▓▓▓▓
-@   ║███╫█╫   .░░╫╫╫╫╫████▓▓▓▓█▓▓█▓▓▓▓████╫╫╫╫Ñ░░M░▀M░▀█▓▓░N  ,▄█▓▓▓▓▓M
-@   ╙▀▀▀╫█╫   ]░╬╫╫╫╫███▓▓▓▓▀░╫╦╬░░╟▓▓▓▓███╫╫╫╫░░Ñ]╙▀░║████████╫╫╫╬Ñ╫Å
-@    ║▓▓╫█╫▓▓▓░░╫╫╫╫▓██▓▓▓▓░╫Ñ░▄╬░╫Ñ░▓▓▓▓██▓╫╫╫Ñ░░└░░░▓█▀▀▀░╬╫╫▀╙,,╬M
-@    ╙▀▀╫█╫    `██████▓▓▓▓▌░╫Ñ╟▓▓M╫Ñ░▓▓▓▓▓████▌       ▐▓Ω     `╙╜╜^
-@    ,╩▀╫╥╦╦╦╦╬╨╨╨░╠▀▀▀▀▀░░░░░░╫░░░▀▀▀▀▀░░╨╨╨½╦╦╦╦╦╦╦▀▀▀╦╦
-@   ▀▀▀▀▀▀▀▀▀▀▀▀▀████▀▀██████████████████▀▀████▀▀▀▀▀▀▀▀▀▀▀▀¬\n\n"""
+@                                                         ,
+@                 ╓╗╗,                          ,╓▄▄▄Φ▓▓██▌╫D
+@                ║▌ `▓L            ,,, ╓▄▄▄Φ▓▓▀▀▀╫╫╫╫╫╫╫▀▀╫▓▓▄
+@                 ▓▄▓▓▓        ,▄▄B░▀╫Ñ╬░░╫╫▓▓▓▓╫╫╫╫▓▓▓╫╫╫╫╣▓▓▓▄
+@                 ║████L   ,╓#▀▀▀╨╫ÑÑ╦▄▒▀╣▓▄▄▀╣▌╫▀    ██╫╫╫╫▓▓╫▓▓φ
+@                  ▓╫╫╫▀]Ñ░░░░ÑÑÑÑ░░░░░╠▀W▄╠▀▓▒░╫Ñ╖   ╙└"╜▀▓▓▓▓▓█▓▓
+@                  ║░░░╦╬╫╫╫╫╫╫╫╫╫╫╫╫╫ÑÑ░░░╠Ñ░╨╫Ñ░╫╫╫╫N     ▀▓▓▓╫██▓╕
+@                ,]░╦╬╫╫╫╫╫╫╫▓▓▓▓▓▓╫╫╫╫╫╫╫Ñ░░╠░░╫M░╠╫╫╫╫╦,    ▀▓▓▓▓▓▓⌐
+@       ╗▄╦     ]░░╬╫╫╫╫╫▓▓██████████▓▓▒╫╫╫╫Ñ░░╟▒╟▓▒ñ▓▓▓▓░N    ╙▓▓▓▓▓▓
+@   ║███╫█╫    ]░░╫╫╫╫╫▓███▓▓▓▓▓▓▓▓▓▓███▓╫╫╫╫╫░░╟▒╟▓Ü╟▓▓▓▓░H    ╟▓▓▓▓▓L
+@   ║███╫█╫   ]░░╫╫╫╫▓██▓╫▓▓▓▀▀╠╠╬▀▓▓▓╫▓██▓╫╫╫╫░░ÑÑ╠▄░╠▓▓▓▄▄▄▄▄▓▓▓╫╫╫╫
+@    ╓▄▄╫█╫╖╖╖╦░╫╫╫╫╫██▓▓▓▓▀░╬Ñ╣╬╫Ñ░╟▓▓▓▓██╫╫╫╫Ñ░╦]░░░║████▀▀╫╫╫▓╩╨╟╫
+@    ╟▓▓╫█╫▀▀▀╩╬╩╫╫▓██▓▓▓▓▌░╫░╟▓▓K╫Ñ░▓▓▓▓╫██▓▒╩╩╩╩ ╙╩╨▀▓M╨╩╨╙╝╣N╦╗Φ╝
+@       ╫█╫     ▀███▀╣▓▓▓▓▓░╫Ñ░╠▀░╫Ü░▓▓▓▓▓▀▀███╕      ▐▓▌╖
+@   ▄▄▄▄▓█▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄╛
+@                ▀╩╫╫╫╠╣▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▀░╫╫╫╫▌
+@                 ╗▄╫╫Ñ░╠▀▓▓▓▓▓▓▓▓▓▓▓▓▀░╦╬╫╫∩
+@                   `⌠╫╫╫Ñ░░Å╣▀▀▀▀▀▒░╦╬╫╫╫`█
+@                    ╙╙""╫╫╫½╫╫╫╬╫╫╫╫╫M"▓╛
+@                       └╙└ ▄▓╩`║▓╩ Å▀\n\n
+    """
     titles = [
         """
        ███▄ ▄███▓ ██▓▄▄▄█████▓ ██▀███  ▓█████   ██████  ▄▄▄       █     █░
@@ -873,65 +651,17 @@ def main():
 """,
     ]
     chosen_title = random.choice(titles)
-    tagline = "{}        *ATT&CK for Enterprise v{}\n\n      Cutting through MITRE ATT&CK framework...\n".format(
+    tagline = "{}        *ATT&CK for Enterprise v{}\n".format(
         chosen_title, attack_version
     )
     time.sleep(2)
     subprocess.Popen(["clear"]).communicate()
     print_saw(saw, tagline, "                                                        ")
-    # obtaining framework
-    for sheet_tab in sheet_tabs:
-        sheet, tab = sheet_tab.split("-")
-        filename = "enterprise-attack-v{}-{}.".format(attack_version, sheet)
-        spreadsheet = "{}xlsx".format(filename)
-        if not os.path.exists(
-            "enterprise-attack-v{}/{}".format(attack_version, spreadsheet)
-        ):
-            mitre_spreadsheet = requests.get(
-                "https://attack.mitre.org/docs/enterprise-attack-v{}/{}".format(
-                    attack_version, spreadsheet
-                )
-            )
-            with open(spreadsheet, "wb") as spreadsheet_file:
-                spreadsheet_file.write(mitre_spreadsheet.content)
-        else:
-            pass
-        temp_csv = "{}temp.csv".format(filename)
-        if sheet == "techniques":
-            print_saw(
-                saw, tagline, "                                                      "
-            )
-            xlsx_file = pandas.read_excel(spreadsheet, tab)
-        elif sheet == "groups":
-            xlsx_file = pandas.read_excel(spreadsheet, tab)
-        else:
-            pass
-        xlsx_file.to_csv(temp_csv, index=None, header=True)
-        with open(temp_csv) as csv_with_new_lines:
-            malformed_csv = str(csv_with_new_lines.readlines())[2:-2]
-            malformed_csv = re.sub(r"\\t", r"£\\t£", malformed_csv)
-            if "-groups" not in filename:
-                print_saw(
-                    saw, tagline, "                                                    "
-                )
-                malformed_csv = re.sub(r"\\n', '(T\d{4})", r"\n\1", malformed_csv)
-                malformed_csv = re.sub(
-                    r"\\n['\"], ['\"]\\n['\"], ['\"]", r".  ", malformed_csv
-                )
-                formated_csv = malformed_csv
-            else:
-                malformed_csv = re.sub(r"\\n', '", r"\n", malformed_csv)
-                malformed_csv = re.sub(r"\n\"\\n', \"", r"\"\n", malformed_csv)
-                malformed_csv = re.sub(r"\n\"\n", r"\"\n", malformed_csv)
-                malformed_csv = re.sub(r"\n( ?[^G])", r"\1", malformed_csv)
-                malformed_csv = re.sub(r"\\n', \"", r"\"\n", malformed_csv)
-                malformed_csv = re.sub(r"\\n\", '", r"\"\n", malformed_csv)
-                formated_csv = malformed_csv.replace('\\"', '"')
-                filename = "{}-{}.".format(filename[0:-1], tab.replace(" used", ""))
-        with open("{}csv".format(filename), "w") as final_csv:
-            final_csv.write(formated_csv)
-        os.remove(temp_csv)
     if saw:
+        print_saw(
+            saw, tagline, "                                                      "
+        )
+        print_saw(saw, tagline, "                                                    ")
         print_saw(saw, tagline, "                                                  ")
         print_saw(saw, tagline, "                                                ")
         print_saw(saw, tagline, "                                              ")
@@ -952,580 +682,726 @@ def main():
     terms = str(search_terms)[2:-2].split(",")
     terms = list(filter(None, terms))
     print_saw(saw, tagline, "                        ")
-    groups = str(actor_groups)[2:-2].split(",")
-    groups = list(filter(None, groups))
+    softwaregroups = str(softwareorgroups)[2:-2].split(",")
+    softwaregroups = list(filter(None, softwaregroups))
     print_saw(saw, tagline, "                      ")
-    additional_terms = []
-    associated_threat_actors = []
-    techniques_used = []
-    all_findings = []
-    previous_findings = {}
-    query_parameters = []
-    print_saw(saw, tagline, "                    ")
-    if os.path.exists(
-        "{}_OpMITRE-groups-techniques.csv".format(str(datetime.now())[0:10])
-    ):
-        os.remove("{}_OpMITRE-groups-techniques.csv".format(str(datetime.now())[0:10]))
+    if saw:  # creating MITRESaw output file names
+        if str(platforms) == "['.']":
+            platforms_filename_insert = ""
+        else:
+            platforms_filename_insert = "{}_".format(
+                str(platforms)[2:-2].replace("', '", "-")
+            )
+        if str(terms) == "['.']":
+            terms_filename_insert = ""
+        else:
+            terms_filename_insert = "{}_".format(str(terms)[2:-2].replace("', '", "-"))
+        if str(softwaregroups) == "['.']":
+            softwaregroups_filename_insert = ""
+        else:
+            softwaregroups_filename_insert = "{}_".format(
+                str(softwaregroups)[2:-2].replace("', '", "-")
+            )
+        MITRESaw_filename_prefix = "{}_{}{}{}MITRESaw-".format(
+            str(datetime.now())[0:10],
+            platforms_filename_insert,
+            terms_filename_insert,
+            softwaregroups_filename_insert,
+        )
     else:
         pass
-    print_saw(saw, tagline, "                  ")
-    time.sleep(0.5)
-    print_saw(saw, tagline, "                ")
-    print_saw(saw, tagline, "              ")
-    # filtering on search terms and threat groups
-    for csvfilename in os.listdir("./"):
-        if csvfilename.endswith("-groups-groups.csv"):
-            for term in terms:
-                for group in groups:
-                    with open("{}".format(csvfilename), encoding="utf-8") as csv:
-                        for eachrow in csv:
-                            row_elements = re.findall(
-                                r"^([^,]+),([^,]+),([^\n]+),https:\/\/attack\.mitre\.org\/groups\/\1,\d{1,2} ",
-                                eachrow.strip(),
-                            )
-                            if len(row_elements) > 0:
-                                _, threat_actor, description = row_elements[0]
-                                if (
-                                    term == "."
-                                    or term in description.replace(" ", "_").lower()
-                                    or term in description.replace(" ", "_").upper()
-                                ):
-                                    if group == "." or group == threat_actor:
-                                        if term == ".":
-                                            associated_threat_actors.append(
-                                                "{}||{}||{}".format(
-                                                    threat_actor, description, "*"
-                                                )
-                                            )
-                                        else:
-                                            for additional_term in terms:
-                                                if additional_term in eachrow:
-                                                    additional_terms.append(
-                                                        additional_term
-                                                    )
-                                                else:
-                                                    pass
-                                            associated_threat_actors.append(
-                                                "{}||{}||{}::{}".format(
-                                                    threat_actor,
-                                                    description,
-                                                    term,
-                                                    str(additional_terms),
-                                                )
-                                            )
-                                            additional_terms.clear()
-                                    else:
-                                        pass
-                            else:
-                                pass
-                        else:
-                            pass
-        else:
-            pass
-    print_saw(saw, tagline, "            ")
-    associated_threat_actors = sorted(list(set(associated_threat_actors)))
-    print_saw(saw, tagline, "          ")
-    # collecting associated techniques
-    for csvfilename in os.listdir("./"):
-        if csvfilename.endswith("-groups-techniques.csv"):
-            with open("{}".format(csvfilename), encoding="utf-8") as csv:
-                for eachrow in csv:
-                    row_elements = re.findall(
-                        r"^[^,]+,([^,]+),[^,]+,[^,]+,([^,]+),([^,]+),[^,]+,([^\n]+)",
-                        eachrow.strip(),
-                    )
-                    (
-                        threat_actor,
-                        technique_id,
-                        technique_name,
-                        threat_actor_method,
-                    ) = row_elements[0]
-                    if "'{}||".format(threat_actor) in str(
-                        associated_threat_actors
-                    ):  # check if threat_actor matches entry in associated_threat_actors
-                        threat_actor_description = (
-                            str(associated_threat_actors)
-                            .split("'{}||".format(threat_actor))[1]
-                            .split("']', '")[0]
-                            .split("||")[0]
-                        )
-                        if str(associated_threat_actors).split("||")[-1] != "*":
-                            actor_searchterms = re.findall(
-                                r"(\w+)",
-                                str(associated_threat_actors)
-                                .split("'{}||".format(threat_actor))[1]
-                                .split("']', '")[0]
-                                .split("||")[1]
-                                .split("', \"")[0]
-                                .split("', '")[0],
-                            )
-                            actor_searchterms = sorted(list(set(actor_searchterms)))
-                        else:
-                            actor_searchterms = "*"
-                        techniques_used.append(
-                            "{}||{}||{}||{}||{}||{}".format(
-                                technique_id,
-                                technique_name,
-                                threat_actor,
-                                threat_actor_method,
-                                threat_actor_description,
-                                actor_searchterms,
-                            )
-                        )
-                    else:
-                        pass
-        else:
-            pass
-    print_saw(saw, tagline, "        ")
-    actor_techniques_used = sorted(list(set(techniques_used)))
-    print_saw(saw, tagline, "      ")
-    if str(associated_threat_actors).split("||")[-1][0:1] != "*":
-        term_insert = "'\033[1;36m{}\033[1;m'...".format(
-            str(terms)[2:-2].replace("', '", "\033[1;m', '\033[1;36m")
+    additional_terms = []
+    group_procedures = {}
+    groups = {}
+    software_procedures = {}
+    software = {}
+    contextual_information = {}
+    evidence_found = []
+    previous_findings = {}
+    valid_procedures = []
+    all_evidence = []
+    identifiers = ""
+    log_sources = []
+    if os.path.exists("{}techniques.csv".format(MITRESaw_filename_prefix)):
+        os.remove("{}techniques.csv".format(MITRESaw_filename_prefix))
+    else:
+        pass
+    if saw:
+        print_saw(saw, tagline, "                    ")
+        print_saw(saw, tagline, "                  ")
+        print_saw(saw, tagline, "                ")
+        print_saw(saw, tagline, "              ")
+        print_saw(saw, tagline, "            ")
+        print_saw(saw, tagline, "          ")
+        print_saw(saw, tagline, "        ")
+        print_saw(saw, tagline, "      ")
+        print_saw(saw, tagline, "    ")
+        print_saw(saw, tagline, "  ")
+        print_saw(saw, tagline, "partial")
+        print_saw(saw, tagline, "-")  # remove saw
+        print()
+    if str(terms) != "['.']":
+        terms_insert = " associated with '\033[1;36m{}\033[1;m'".format(
+            str(terms)[2:-2].replace("_", " ").replace("', '", "\033[1;m', '\033[1;36m")
         )
     else:
-        term_insert = "*"
-    print_saw(saw, tagline, "    ")
-    print_saw(saw, tagline, "  ")
-    print_saw(saw, tagline, "partial")
-    # extracting all pertentant information
-    print_saw(saw, tagline, "-")  # remove saw
-    print()
-    print(
-        "    -> Extracting \033[1;31midentifiers\033[1;m from \033[1;32mtechniques\033[1;m based on \033[1;33mthreat actors\033[1;m associated with {}".format(
-            term_insert.replace("_", " ")
-        )
-    )
-    print()
-    time.sleep(0.5)
-    for csvfilename in os.listdir("./"):
-        if "-groups-" not in csvfilename and csvfilename.endswith(".csv"):
-            for pairing in actor_techniques_used:
-                threat_actor = pairing.split("||")[2]
-                actor_terms = pairing.split("||")[-1][2:-2]
-                with open("{}".format(csvfilename), encoding="utf-8") as csv:
-                    for eachrow in csv:
-                        if threat_actor in eachrow.strip():
-                            row_elements = re.findall(
-                                r"^([^,]+),([^,]+),(.*)[\",]https://attack.mitre.org/techniques/T\d{4}(?:/\d{3})?,\d+ \w+ \d+,\d+ \w+ \d+,[\d\.]+,\"?[A-Za-z ,]+\"?,(.*),\"?(Azure AD|Containers|Google Workspace|IaaS|Linux|Network|Office 365|PRE|SaaS|Windows|macOS),(\"[^\"]+\")[\",]",
-                                eachrow.strip(),
-                            )
-                            if len(row_elements) > 0:
-                                (
-                                    technique_id,
-                                    technique_name,
-                                    description,
-                                    detection,
-                                    platform,
-                                    data_sources,
-                                ) = row_elements[0]
-                                if (
-                                    operating_platforms and platform in str(platforms)
-                                ) or len(
-                                    platforms
-                                ) == 0:  # including only requested platforms
-                                    if (
-                                        ": " in technique_name
-                                    ):  # including sub-techniques
-                                        technique_findings = extract_indicators(
-                                            truncate,
-                                            technique_id,
-                                            technique_name.split(": ")[0],
-                                            threat_actor,
-                                            actor_techniques_used,
-                                            description,
-                                            detection,
-                                            data_sources,
-                                            actor_terms,
-                                            previous_findings,
-                                        )
-                                        technique_findings = extract_indicators(
-                                            truncate,
-                                            technique_id,
-                                            technique_name.split(": ")[1],
-                                            threat_actor,
-                                            actor_techniques_used,
-                                            description,
-                                            detection,
-                                            data_sources,
-                                            actor_terms,
-                                            previous_findings,
-                                        )
-                                    else:
-                                        technique_findings = extract_indicators(
-                                            truncate,
+        terms_insert = ""
+    # obtaining group procedure
+    for groupsfile in os.listdir("./"):
+        if groupsfile.endswith("-groups-techniques_used.csv"):
+            with open(
+                "{}".format(groupsfile),
+                encoding="utf-8",
+            ) as groups_procedure_csv:
+                for groups_procedure in groups_procedure_csv:
+                    groups_procedure = re.sub(
+                        r"\\n[\"'], [\"'](G\d{4},)",
+                        r"\\n',<##>'\1",
+                        groups_procedure,
+                    )
+                    for eachrow in groups_procedure.split("\\n',<##>'"):
+                        for softwareorgroup in softwaregroups:
+                            if softwareorgroup in eachrow and eachrow.startswith("G"):
+                                row_elements = re.findall(
+                                    r"^([^,]+),([^,]+),[^,]+,[^,]+,([^,]+),([^,]+),[^,]+,(.*)",
+                                    eachrow.strip(),
+                                )
+                                if len(row_elements) > 0:
+                                    group_id = row_elements[0][0]
+                                    group_name = row_elements[0][1]
+                                    technique_id = row_elements[0][2]
+                                    technique_name = row_elements[0][3]
+                                    procedure_description = row_elements[0][4]
+                                    group_procedures[
+                                        "{}||{}||{}||{}||{}".format(
+                                            group_id,
+                                            group_name,
                                             technique_id,
                                             technique_name,
-                                            threat_actor,
-                                            actor_techniques_used,
-                                            description,
-                                            detection,
-                                            data_sources,
-                                            actor_terms,
-                                            previous_findings,
+                                            procedure_description,
                                         )
-                                    all_findings.append(technique_findings)
+                                    ] = "-"
                                 else:
                                     pass
                             else:
                                 pass
-                        else:
-                            pass
         else:
             pass
-    filtered_findings = list(filter(None, all_findings))
-    consolidated_techniques = []
-    for technique_finding in filtered_findings:
-        for every_technique in technique_finding:
-            consolidated_techniques.append(every_technique)
-    # consolidating results
-    with open(
-        "{}_OpMITRE-groups-techniques.csv".format(str(datetime.now())[0:10]), "w"
-    ) as opmitre_csv:
-        opmitre_csv.write(
-            "technique_id,technique_name,indicators,indicator_type,threat_actor,threat_actor_method,threat_actor_description,detection\n"
-        )
-    log_sources = []
-    for dataset in consolidated_techniques:
-        logsource = (
-            dataset.split("||")[-2]
-            .replace(
-                "Active Directory: Active Directory Credential Request",
-                "Command-line logging; Windows event logs",
-            )
-            .replace(
-                "Active Directory: Active Directory Object Access",
-                "Command-line logging; Windows event logs",
-            )
-            .replace(
-                "Active Directory: Active Directory Object Creation",
-                "Command-line logging; Windows event logs",
-            )
-            .replace(
-                "Active Directory: Active Directory Object Deletion",
-                "Command-line logging; Windows event logs",
-            )
-            .replace(
-                "Active Directory: Active Directory Object Modification",
-                "Command-line logging; Windows event logs",
-            )
-            .replace("Cloud Service: Cloud Service Disable", "Cloud API logging")
-            .replace("Cloud Service: Cloud Service Enumeration", "Cloud API logging")
-            .replace("Cloud Service: Cloud Service Modification", "Cloud API logging")
-            .replace("Cloud Storage: Cloud Storage Access", "Cloud API logging")
-            .replace("Cloud Storage: Cloud Storage Creation", "Cloud API logging")
-            .replace("Cloud Storage: Cloud Storage Deletion", "Cloud API logging")
-            .replace("Cloud Storage: Cloud Storage Enumeration", "Cloud API logging")
-            .replace("Cloud Storage: Cloud Storage Modification", "Cloud API logging")
-            .replace("Drive: Drive Access", "Windows event logs; setupapi.dev.log")
-            .replace("Driver: Driver Load", "Sysmon")
-            .replace("Command: Command Execution", "Command-line logging")
-            .replace("Container: Container Creation", "Command-line logging")
-            .replace("Container: Container Enumeration", "Command-line logging")
-            .replace("Container: Container Start", "Command-line logging")
-            .replace(
-                "File: File Access", "Command-line logging; Windows event logs; Sysmon"
-            )
-            .replace(
-                "File: File Creation",
-                "Command-line logging; Windows event logs; Sysmon",
-            )
-            .replace(
-                "File: File Deletion",
-                "Command-line logging; Windows event logs; Sysmon",
-            )
-            .replace("File: File Metadata", "Artefact acquisition")
-            .replace(
-                "File: File Modification",
-                "Command-line logging; Windows event logs; Sysmon",
-            )
-            .replace(
-                "Firewall: Firewall Disable", "Command-line logging; Windows event logs"
-            )
-            .replace("Firewall: Firewall Enumeration", "Command-line logging")
-            .replace(
-                "Firewall Rule Modification", "Command-line logging; Windows event logs"
-            )
-            .replace(
-                "Group: Group Enumeration", "Command-line logging; Windows event logs"
-            )
-            .replace(
-                "Group: Group Modification", "Command-line logging; Windows event logs"
-            )
-            .replace("Image: Image Creation", "Cloud API logging")
-            .replace("Image: Image Deletion", "Cloud API logging")
-            .replace("Image: Image Modification", "Cloud API logging")
-            .replace("Instance: Instance Creation", "Cloud Audit logging")
-            .replace("Instance: Instance Deletion", "Cloud Audit logging")
-            .replace("Instance: Instance Enumeration", "Cloud Audit logging")
-            .replace("Instance: Instance Modification", "Cloud Audit logging")
-            .replace("Instance: Instance Start", "Cloud Audit logging")
-            .replace("Instance: Instance Stop", "Cloud Audit logging")
-            .replace("Kernel: Kernel Module Load", "/lib/module logging")
-            .replace(
-                "Logon Session: Logon Session Creation",
-                "Windows event logs; *nix /var/log",
-            )
-            .replace("Module: Module Load", "Command-line logging; Sysmon")
-            .replace("Named Pipe: Named Pipe Metadata", "Command-line logging; Sysmon")
-            .replace(
-                "Network Share: Network Share Access",
-                "Command-line logging; Windows event logs",
-            )
-            .replace(
-                "Network Traffic: Network Connection Creation",
-                "Process monitoring; Windows event logs; Sysmon; Zeek conn.log",
-            )
-            .replace("Network Traffic: Network Traffic Content", "PCAP")
-            .replace("Network Traffic: Network Traffic Flow", "netflow")
-            .replace(
-                "Process: OS API Execution",
-                "Process monitoring; PowerShell Script Block logging; Command-line logging",
-            )
-            .replace("Process: Process Access", "Sysmon")
-            .replace(
-                "Process: Process Creation",
-                "Command-line logging; Windows event logs; Sysmon",
-            )
-            .replace(
-                "Process: Process Metadata",
-                "Sysmon",
-            )
-            .replace("Process: Process Modification", "Artefact acquisition")
-            .replace("Process: Process Termination", "Windows event logs; Sysmon")
-            .replace(
-                "Scheduled Job: Scheduled Job Creation",
-                "Windows event logs; *nix /var/log",
-            )
-            .replace(
-                "Scheduled Job: Scheduled Job Modification",
-                "Windows event logs; *nix /var/log",
-            )
-            .replace(
-                "Script: Script Execution",
-                "PowerShell Script Block logging; Command-line logging; Windows event logs; WMI",
-            )
-            .replace("Service: Service Creation", "Windows event logs; *nix /var/log")
-            .replace(
-                "Service: Service Modification", "Windows event logs; *nix /var/log"
-            )
-            .replace("Snapshot: Snapshot Creation", "Cloud API logging")
-            .replace("Snapshot: Snapshot Deletion", "Cloud API logging")
-            .replace("Snapshot: Snapshot Enumeration", "Cloud API logging")
-            .replace("Snapshot: Snapshot Modification", "Cloud API logging")
-            .replace(
-                "User Account: User Account Authentication",
-                "Windows event logs; *nix /var/log/auth.log",
-            )
-            .replace(
-                "User Account: User Account Creation",
-                "Windows event logs; *nix /etc/passwd logging",
-            )
-            .replace(
-                "User Account: User Account Deletion",
-                "Windows event logs; *nix /var/log/auth; access/authentication",
-            )
-            .replace(
-                "User Account: User Account Modification",
-                "Windows event logs; *nix /var/log/auth; access/authentication",
-            )
-            .replace("User Account: User Account Authentication", "")
-            .replace("Volume: Volume Creation", "Cloud API logging")
-            .replace("Volume: Volume Deletion", "Cloud API logging")
-            .replace("Volume: Volume Enumeration", "Cloud API logging")
-            .replace("Volume: Volume Modification", "Cloud API logging")
-            .replace(
-                "Windows Registry: Windows Registry Key Access",
-                "Windows Registry monitoring",
-            )
-            .replace(
-                "Windows Registry: Windows Registry Key Creation",
-                "Windows Registry monitoring",
-            )
-            .replace(
-                "Windows Registry: Windows Registry Key Deletion",
-                "Windows Registry monitoring",
-            )
-            .replace(
-                "Windows Registry: Windows Registry Key Modification",
-                "Windows Registry monitoring",
-            )
-            .replace(
-                "WMI",
-                "Command-line logging; Microsoft-Windows-WMI-Activity/Trace & WMITracing.log; Sysmon",
-            )
-            .replace(
-                "WMI: WMI Creation",
-                "Command-line logging; Microsoft-Windows-WMI-Activity/Trace & WMITracing.log; Sysmon",
-            )
-        )
-        log_sources.append(logsource)
-        if dataset.split("||")[8] != "[]" and dataset.split("||")[-2] != "-":
-            group_techniques[
-                "{}||{}||{}||{}||{}||{}||{}||{}||'{}'||{}".format(
-                    dataset.split("||")[0],  # technique id
-                    dataset.split("||")[1],  # technique name
-                    dataset.split("||")[7],  # technique description
-                    dataset.split("||")[6],  # identifer_type
-                    logsource,  # log sources
-                    dataset.split("||")[2],  # threat actor
-                    dataset.split("||")[3],  # threat actor usage
-                    dataset.split("||")[4],  # threat actor description
-                    dataset.split("||")[5],  # threat actor keyword matches
-                    dataset.split("||")[8]
-                    .replace("\\\\\\\\", "\\\\")
-                    .replace("\\\\£\\\\t£", "\\\\t")
-                    .replace("[.]", ".")
-                    .replace("[:]", ":")
-                    .strip("\\")
-                    .lower(),  # indicators
-                )
-            ] = "-"
-            # building queries
-            if queries:
-                query_parameters.append(
-                    "{}||{}".format(
-                        dataset.split("||")[8]
-                        .replace("\\\\\\\\", "\\\\")
-                        .replace("\\\\£\\\\t£", "\\\\t")
-                        .replace("[.]", ".")
-                        .replace("[:]", ":")
-                        .strip("\\"),
-                        dataset.split("||")[1],
-                    )
-                )
-            else:
-                pass
-    for data_entry in group_techniques.keys():
-        with open(
-            "{}_OpMITRE-groups-techniques.csv".format(str(datetime.now())[0:10]), "a"
-        ) as opmitre_csv:
-            opmitre_csv.write(
-                data_entry.replace("\\\\\\\\", "\\\\")
-                .replace("\\\\£\\\\t£", "\\\\t")
-                .replace("[.]", ".")
-                .replace("[:]", ":")
-                .replace("\\n', '", ".. ")
-                .replace(". .  ", ". ")
-            )
-    # creating queries
-    if queries:
-        query_parameters = list(set(query_parameters))
-        if os.path.exists("{}_OpMITRE-queries.conf".format(str(datetime.now())[0:10])):
-            os.remove("{}_OpMITRE-queries.conf".format(str(datetime.now())[0:10]))
-        else:
-            pass
-        for query in query_parameters:
+    # obtaining group description
+    for groupsfile in os.listdir("./"):
+        if groupsfile.endswith("-groups-groups.csv"):
             with open(
-                "{}_OpMITRE-queries.conf".format(str(datetime.now())[0:10]), "a"
-            ) as opmitre_queries:
-                andor_query = query.split("||")[0]
-                has = "any"
-                if " " in query.split("||")[0]:
-                    for command_combo in query.split("||")[0].split("', '"):
-                        if " " in command_combo and not command_combo.strip(
-                            "'"
-                        ).lower().startswith("hk"):
-                            andor_query = '("{}")'.format(
-                                command_combo[2:-2]
-                                .strip("'")
-                                .replace('"', '\\"')
-                                .replace(" ", '" and "')
-                                .replace("*", "")
-                                .strip('"')
-                                .strip("\\")
+                "{}".format(groupsfile),
+                encoding="utf-8",
+            ) as groupscsv:
+                for groups_row in groupscsv:
+                    groups_row = re.sub(
+                        r"\\n[\"'], [\"'](G\d{4},)",
+                        r"\\n',<##>'\1",
+                        groups_row,
+                    )
+                    group_description_row = re.findall(
+                        r"^([^,]+),([^,]+),([^\n]+),https:\/\/attack\.mitre\.org\/groups\/\1,\d{1,2} ",
+                        groups_row.strip(),
+                    )
+                    if len(group_description_row) > 0:
+                        group_id = group_description_row[0][0]
+                        group_name = group_description_row[0][1]
+                        group_description = group_description_row[0][2]
+                        group_id_name = (
+                            "[{}](https://attack.mitre.org/groups/{})".format(
+                                group_name, group_id
                             )
-                            has = "all"
+                        )
+                        if str(terms) == "['.']":
+                            for group_procedure in group_procedures.keys():
+                                if (
+                                    group_procedure.split("||")[0] == group_id
+                                    and group_procedure.split("||")[1] == group_name
+                                    and group_id_name in str(group_procedure)
+                                ):
+                                    groups[
+                                        "{}||{}||{}{}".format(
+                                            group_procedure,
+                                            group_description,
+                                            term,
+                                            additional_terms,
+                                        )
+                                    ] = "-"
+                            additional_terms.clear()
                         else:
-                            pass
-                else:
-                    pass
-                stanza_title = "[{}]\n".format(query.split("||")[1])
-                if " and " in andor_query[1:-1]:
-                    andor_query = 'where "{}" IN(<field_name>)'.format(
-                        andor_query[1:-1].replace(
-                            " and ", '" IN(<field_name>) AND where "'
+                            for term in terms:
+                                if (
+                                    term.lower().replace("_", " ")
+                                    in group_description.lower()
+                                ):
+                                    for additional_term in terms:
+                                        if (
+                                            additional_term.lower()
+                                            in group_description.lower()
+                                        ):
+                                            additional_terms.append(additional_term)
+                                        else:
+                                            pass
+                                    for group_procedure in group_procedures.keys():
+                                        if (
+                                            group_procedure.split("||")[0] == group_id
+                                            and group_procedure.split("||")[1]
+                                            == group_name
+                                            and group_id_name in str(group_procedure)
+                                        ):
+                                            groups[
+                                                "{}||{}||{}{}".format(
+                                                    group_procedure,
+                                                    group_description,
+                                                    term,
+                                                    additional_terms,
+                                                )
+                                            ] = "-"
+                                    additional_terms.clear()
+                            else:
+                                pass
+                    else:
+                        pass
+        else:
+            pass
+    # obtaining software procedure
+    for softwarefile in os.listdir("./"):
+        if softwarefile.endswith("-software-techniques_used.csv"):
+            with open(
+                "{}".format(softwarefile),
+                encoding="utf-8",
+            ) as software_procedure_csv:
+                for software_procedure in software_procedure_csv:
+                    software_procedure = re.sub(
+                        r"\\n[\"'], [\"'](S\d{4},)",
+                        r"\\n',<##>'\1",
+                        software_procedure,
+                    )
+                    for eachrow in software_procedure.split("\\n',<##>'"):
+                        for softwareorgroup in softwaregroups:
+                            if softwareorgroup in eachrow:
+                                if eachrow.startswith("S"):
+                                    row_elements = re.findall(
+                                        r"^([^,]+),([^,]+),[^,]+,[^,]+,([^,]+),([^,]+),[^,]+,(.*)",
+                                        eachrow.strip(),
+                                    )
+                                    if len(row_elements) > 0:
+                                        software_id = row_elements[0][0]
+                                        software_name = row_elements[0][1]
+                                        technique_id = row_elements[0][2]
+                                        technique_name = row_elements[0][3]
+                                        procedure_description = row_elements[0][4]
+                                        software_procedures[
+                                            "{}||{}||{}||{}||{}".format(
+                                                software_id,
+                                                software_name,
+                                                technique_id,
+                                                technique_name,
+                                                procedure_description,
+                                            )
+                                        ] = "-"
+                                    else:
+                                        pass
+                                else:
+                                    pass
+                            else:
+                                pass
+        else:
+            pass
+    # obtaining software description
+    for softwarefile in os.listdir("./"):
+        if softwarefile.endswith("-software-software.csv"):
+            with open(
+                "{}".format(softwarefile),
+                encoding="utf-8",
+            ) as softwarecsv:
+                for software_row in softwarecsv:
+                    software_row = re.sub(
+                        r"\\n[\"'], [\"'](S\d{4},)",
+                        r"\\n',<##>'\1",
+                        software_row,
+                    )
+                    software_description_row = re.findall(
+                        r"^([^,]+),([^,]+),([^\n]+),https:\/\/attack\.mitre\.org\/software\/\1,\d{1,2} ",
+                        software_row.strip(),
+                    )
+                    if len(software_description_row) > 0:
+                        software_id = software_description_row[0][0]
+                        software_name = software_description_row[0][1]
+                        software_description = software_description_row[0][2]
+                        software_id_name = (
+                            "[{}](https://attack.mitre.org/software/{})".format(
+                                software_name, software_id
+                            )
                         )
-                    )
-                else:
-                    andor_query = 'where "{}" IN(<field_name>)'.format(
-                        andor_query[1:-1]
-                    )
-                splunk_query = "{}  // SPL [Splunk]\n".format(andor_query)
-                if has == "any":
-                    sentinel_query = (
-                        '<field_name> has_{}("{}")  // KQL [Sentinel]\n'.format(
-                            has, andor_query[2:-2]
-                        )
-                    )
-                else:
-                    sentinel_query = (
-                        '<field_name> has_{}("{}")  // KQL [Sentinel]\n'.format(
-                            has, andor_query.replace(" and ", ", ")
-                        )
-                    )
-                lucene_query = (
-                    '<field name>:("{}")  // elastic/kibana [lucene]\n'.format(
-                        andor_query[1:-1].replace("', '", '" OR "')
-                    )
-                )
-                kql_query = '<field name>:("{}")  // elastic/kibana [KQL]\n'.format(
-                    andor_query[1:-1].replace("', '", '" or "')
-                )
-                querydsl_query = '{{"query": {{"terms": {{"<field name>": [ "{}" ]}}}}}}  // elastic/kibana [Query DSL]\n\n\n\n'.format(
-                    andor_query[1:-1].replace("', '", '", "')
-                )
-                query = "{}{}{}{}{}{}".format(
-                    stanza_title,
-                    splunk_query,
-                    sentinel_query,
-                    lucene_query,
-                    kql_query,
-                    querydsl_query,
-                )
-                tidied_query = (
-                    query.replace('""', '"')
-                    .replace('""', '"')
-                    .replace('("("', '("')
-                    .replace('")")', '")')
-                    .replace("'", '"')
-                    .replace('"\\"', '"')
-                    .replace('"klm\\', '"hklm\\')
-                    .replace('"kcu\\', '"hkcu\\')
-                    .replace('"key\\', '"hkey\\')
-                )
-                opmitre_queries.write(
-                    tidied_query.replace('""', '"')
-                    .replace('""', '"')
-                    .replace('"")', '")')
-                )
-    else:
-        pass
-    log_sources = sorted(
-        str(log_sources)[3:-3]
-        .replace(", ", "; ")
-        .replace("'; '", "; ")
-        .replace('"; "', "; ")
-        .replace("; ", ", ")
-        .split(", ")
-    )
-    counted_log_sources = Counter(log_sources)
-    log_coverage = sorted(counted_log_sources.items(), key=lambda x: x[1], reverse=True)
+                        if str(terms) == "['.']":
+                            for software_procedure in software_procedures.keys():
+                                if (
+                                    software_procedure.split("||")[0] == software_id
+                                    and software_procedure.split("||")[1]
+                                    == software_name
+                                    and software_id_name in str(software_procedure)
+                                ):
+                                    software[
+                                        "{}||{}||{}{}".format(
+                                            software_procedure,
+                                            software_description,
+                                            term,
+                                            additional_terms,
+                                        )
+                                    ] = "-"
+                            additional_terms.clear()
+                        else:
+                            for term in terms:
+                                if (
+                                    term.lower().replace("_", " ")
+                                    in software_description.lower()
+                                ):
+                                    for additional_term in terms:
+                                        if (
+                                            additional_term.lower()
+                                            in software_description.lower()
+                                        ):
+                                            additional_terms.append(additional_term)
+                                        else:
+                                            pass
+                                    for (
+                                        software_procedure
+                                    ) in software_procedures.keys():
+                                        if (
+                                            software_procedure.split("||")[0]
+                                            == software_id
+                                            and software_procedure.split("||")[1]
+                                            == software_name
+                                            and software_id_name
+                                            in str(software_procedure)
+                                        ):
+                                            software[
+                                                "{}||{}||{}{}".format(
+                                                    software_procedure,
+                                                    software_description,
+                                                    term,
+                                                    additional_terms,
+                                                )
+                                            ] = "-"
+                                    additional_terms.clear()
+                                else:
+                                    pass
+                    else:
+                        pass
+        else:
+            pass
+    contextual_information = groups | software
     print()
     print(
-        "\n\n     The following log sources are required to \033[4;37mdetect\033[1;m the aforementioned ATT&CK techniques:"
+        "    -> Extracting \033[1;31midentifiers\033[1;m from \033[1;35mtechniques\033[1;m based on \033[1;33mthreat actors/software\033[1;m{}".format(
+            terms_insert
+        )
     )
     print()
     time.sleep(0.5)
-    for log_count in log_coverage:
-        log = log_count[0]
-        count = log_count[1]
-        percentage = str(int(count / len(log_sources) * 100))
-        if percentage == "0":
-            percentage = "<1"
+    for csvtechnique in os.listdir("./"):
+        if csvtechnique.endswith("-techniques-techniques.csv"):
+            with open("{}".format(csvtechnique), encoding="utf-8") as techniquecsv:
+                techniques_file_content = techniquecsv.readlines()
+                for context in str(contextual_information)[2:-7].split(": '-', '"):
+                    context_id = context.split("||")[2][1:]
+                    if "T{},".format(context_id) in str(techniques_file_content):
+                        replaced_technique_row = re.sub(
+                            r"(,https://attack.mitre.org/techniques/T\d{4})(,)",
+                            r"\1||\2",
+                            str(techniques_file_content),
+                        )
+                        associated_technique = replaced_technique_row.split(
+                            "T{},".format(context_id)
+                        )[1].split("\"\\n', 'T")[0]
+                        technique_name = associated_technique.split(",")[0]
+                        technique_information = re.findall(
+                            r",(.*),https:\/\/attack\.mitre\.org\/techniques\/T[\d\.\/]+\|\|,[^,]+,[^,]+,\d+\.\d+,\"?(?:Initial\ Access|Execution|Persistence|Privilege\ Escalation|Defense\ Evasion|Credential\ Access|Dicovery|Lateral\ Movement|Collection|Command\ and\ Control|Exfiltration|Impact)(?:(, (?:Initial\ Access|Execution|Persistence|Privilege\ Escalation|Defense\ Evasion|Credential\ Access|Dicovery|Lateral\ Movement|Collection|Command\ and\ Control|Exfiltration|Impact))?){0,13},(\"?.*\"?),(\"?(?:Azure AD|Containers|Google Workspace|IaaS|Linux|Network|Office 365|PRE|SaaS|Windows|macOS)(?:(?:, (?:Azure AD|Containers|Google Workspace|IaaS|Linux|Network|Office 365|PRE|SaaS|Windows|macOS))?){0,10}\"?),(\"[^\"]+\"),",
+                            associated_technique,
+                        )
+                        if len(technique_information) > 0:
+                            technique_description = technique_information[0][0]
+                            technique_detection = technique_information[0][2]
+                            technique_platforms = technique_information[0][3]
+                            technique_data_sources = technique_information[0][4]
+                            if str(platforms) == "['.']":
+                                valid_procedure = "{}||{}||{}||{}||{}".format(
+                                    context,
+                                    technique_description,
+                                    technique_detection,
+                                    technique_platforms,
+                                    technique_data_sources,
+                                )
+                                valid_procedures.append(valid_procedure)
+                            else:
+                                for platform in platforms:
+                                    if platform in technique_platforms:
+                                        valid_procedure = "{}||{}||{}||{}||{}".format(
+                                            context,
+                                            technique_description,
+                                            technique_detection,
+                                            technique_platforms,
+                                            technique_data_sources,
+                                        )
+                                        valid_procedures.append(valid_procedure)
+                                    else:
+                                        pass
+                        else:
+                            pass
+                    else:
+                        pass
         else:
             pass
-        print("       - {}: \033[1;37m{}%\033[1;m".format(log, percentage))
+    consolidated_procedures = sorted(list(set(valid_procedures)))
+    for each_procedure in consolidated_procedures:
+        (
+            technique_findings,
+            identifiers,
+            previous_findings,
+        ) = extract_indicators(
+            each_procedure,
+            terms,
+            evidence_found,
+            identifiers,
+            previous_findings,
+            truncate,
+        )
+    all_evidence.append(technique_findings)
+    consolidated_techniques = all_evidence[0]
+    if len(consolidated_techniques) > 0:
+        query_pairings = []
+        with open(
+            "{}techniques.csv".format(MITRESaw_filename_prefix), "w"
+        ) as opmitre_csv:
+            opmitre_csv.write(
+                "group_software_id,group_software_name,group_software_description,group_software_link,group_software_searchterms,technique_id,technique_name,groupsoftware_procedure,technique_description,technique_detection,technique_platforms,technique_datasources,evidence_type,evidence_indicators\n"
+            )
+        for dataset in consolidated_techniques:
+            with open(
+                "{}techniques.csv".format(MITRESaw_filename_prefix), "a"
+            ) as opmitre_csv:
+                opmitre_csv.write(
+                    "{}\n".format(dataset.replace(",||,", ",").replace("||", ","))
+                )
+                if queries:
+                    technique_id = dataset.split("||")[2]
+                    technique_name = dataset.split("||")[3]
+                    parameters = (
+                        dataset.split("||")[-1].replace("\\\\\\\\", "\\\\").lower()
+                    )
+                    query_pairings.append("{}||{}||{}".format(technique_id, technique_name, parameters))
+                else:
+                    pass
+            logsource = (
+                dataset.split("||")[-3]
+                .replace(
+                    "Active Directory: Active Directory Credential Request",
+                    "Command-line logging; Windows event logs",
+                )
+                .replace(
+                    "Active Directory: Active Directory Object Access",
+                    "Command-line logging; Windows event logs",
+                )
+                .replace(
+                    "Active Directory: Active Directory Object Creation",
+                    "Command-line logging; Windows event logs",
+                )
+                .replace(
+                    "Active Directory: Active Directory Object Deletion",
+                    "Command-line logging; Windows event logs",
+                )
+                .replace(
+                    "Active Directory: Active Directory Object Modification",
+                    "Command-line logging; Windows event logs",
+                )
+                .replace(
+                    "Application Log: Application Log Content",
+                    "Application Log Content",
+                )
+                .replace("Cloud Service: Cloud Service Disable", "Cloud API logging")
+                .replace("Cloud Service: Cloud Service Enumeration", "Cloud API logging")
+                .replace("Cloud Service: Cloud Service Modification", "Cloud API logging")
+                .replace("Cloud Storage: Cloud Storage Access", "Cloud API logging")
+                .replace("Cloud Storage: Cloud Storage Creation", "Cloud API logging")
+                .replace("Cloud Storage: Cloud Storage Deletion", "Cloud API logging")
+                .replace("Cloud Storage: Cloud Storage Enumeration", "Cloud API logging")
+                .replace("Cloud Storage: Cloud Storage Modification", "Cloud API logging")
+                .replace("Drive: Drive Access", "Windows event logs; setupapi.dev.log")
+                .replace("Driver: Driver Load", "Sysmon")
+                .replace("Command: Command Execution", "Command-line logging")
+                .replace("Container: Container Creation", "Command-line logging")
+                .replace("Container: Container Enumeration", "Command-line logging")
+                .replace("Container: Container Start", "Command-line logging")
+                .replace(
+                    "File: File Access", "Command-line logging; Windows event logs; Sysmon"
+                )
+                .replace(
+                    "File: File Creation",
+                    "Command-line logging; Windows event logs; Sysmon",
+                )
+                .replace(
+                    "File: File Deletion",
+                    "Command-line logging; Windows event logs; Sysmon",
+                )
+                .replace("File: File Metadata", "Artefact acquisition")
+                .replace(
+                    "File: File Modification",
+                    "Command-line logging; Windows event logs; Sysmon",
+                )
+                .replace(
+                    "Firewall: Firewall Disable", "Command-line logging; Windows event logs"
+                )
+                .replace("Firewall: Firewall Enumeration", "Command-line logging")
+                .replace(
+                    "Firewall: Firewall Rule Modification", "Command-line logging; Windows event logs"
+                )
+                .replace(
+                    "Group: Group Enumeration", "Command-line logging; Windows event logs"
+                )
+                .replace(
+                    "Group: Group Modification", "Command-line logging; Windows event logs"
+                )
+                .replace("Image: Image Creation", "Cloud API logging")
+                .replace("Image: Image Deletion", "Cloud API logging")
+                .replace("Image: Image Modification", "Cloud API logging")
+                .replace("Instance: Instance Creation", "Cloud Audit logging")
+                .replace("Instance: Instance Deletion", "Cloud Audit logging")
+                .replace("Instance: Instance Enumeration", "Cloud Audit logging")
+                .replace("Instance: Instance Modification", "Cloud Audit logging")
+                .replace("Instance: Instance Start", "Cloud Audit logging")
+                .replace("Instance: Instance Stop", "Cloud Audit logging")
+                .replace("Kernel: Kernel Module Load", "/lib/module logging")
+                .replace(
+                    "Logon Session: Logon Session Creation",
+                    "Windows event logs; *nix /var/log",
+                )
+                .replace("Module: Module Load", "Command-line logging; Sysmon")
+                .replace("Named Pipe: Named Pipe Metadata", "Command-line logging; Sysmon")
+                .replace(
+                    "Network Share: Network Share Access",
+                    "Command-line logging; Windows event logs",
+                )
+                .replace(
+                    "Network Traffic: Network Connection Creation",
+                    "Process monitoring; Windows event logs; Sysmon; Zeek conn.log",
+                )
+                .replace("Network Traffic: Network Traffic Content", "PCAP")
+                .replace("Network Traffic: Network Traffic Flow", "netflow")
+                .replace(
+                    "Process: OS API Execution",
+                    "Process monitoring; PowerShell Script Block logging; Command-line logging",
+                )
+                .replace("Process: Process Access", "Sysmon")
+                .replace(
+                    "Process: Process Creation",
+                    "Command-line logging; Windows event logs; Sysmon",
+                )
+                .replace(
+                    "Process: Process Metadata",
+                    "Sysmon",
+                )
+                .replace("Process: Process Modification", "Artefact acquisition")
+                .replace("Process: Process Termination", "Windows event logs; Sysmon")
+                .replace(
+                    "Scheduled Job: Scheduled Job Creation",
+                    "Windows event logs; *nix /var/log",
+                )
+                .replace(
+                    "Scheduled Job: Scheduled Job Modification",
+                    "Windows event logs; *nix /var/log",
+                )
+                .replace(
+                    "Script: Script Execution",
+                    "PowerShell Script Block logging; Command-line logging; Windows event logs; Microsoft-Windows-WMI-Activity/Trace & WMITracing.log",
+                )
+                .replace("Sensor Health: Host Status", "Host Availability logging")
+                .replace("Service: Service Creation", "Windows event logs; *nix /var/log")
+                .replace("Service: Service Metadata", "Command-line logging; Windows event logs; *nix /var/log")
+                .replace(
+                    "Service: Service Modification", "Windows event logs; *nix /var/log"
+                )
+                .replace("Snapshot: Snapshot Creation", "Cloud API logging")
+                .replace("Snapshot: Snapshot Deletion", "Cloud API logging")
+                .replace("Snapshot: Snapshot Enumeration", "Cloud API logging")
+                .replace("Snapshot: Snapshot Modification", "Cloud API logging")
+                .replace(
+                    "User Account: User Account Authentication",
+                    "Windows event logs; *nix /var/log/auth.log",
+                )
+                .replace(
+                    "User Account: User Account Creation",
+                    "Windows event logs; *nix /etc/passwd logging",
+                )
+                .replace(
+                    "User Account: User Account Deletion",
+                    "Windows event logs; *nix /var/log/auth & access/authentication",
+                )
+                .replace(
+                    "User Account: User Account Modification",
+                    "Windows event logs; *nix /var/log/auth & access/authentication",
+                )
+                .replace("User Account: User Account Authentication", "")
+                .replace("Volume: Volume Creation", "Cloud API logging")
+                .replace("Volume: Volume Deletion", "Cloud API logging")
+                .replace("Volume: Volume Enumeration", "Cloud API logging")
+                .replace("Volume: Volume Modification", "Cloud API logging")
+                .replace(
+                    "Windows Registry: Windows Registry Key Access",
+                    "Windows Registry monitoring",
+                )
+                .replace(
+                    "Windows Registry: Windows Registry Key Creation",
+                    "Windows Registry monitoring",
+                )
+                .replace(
+                    "Windows Registry: Windows Registry Key Deletion",
+                    "Windows Registry monitoring",
+                )
+                .replace(
+                    "Windows Registry: Windows Registry Key Modification",
+                    "Windows Registry monitoring",
+                )
+                .replace(
+                    "WMI: WMI Creation",
+                    "Command-line logging; Microsoft-Windows-WMI-Activity/Trace & WMITracing.log; Sysmon",
+                )
+            )
+            log_sources.append(logsource)
+        if queries:
+            if os.path.exists("{}queries.conf".format(MITRESaw_filename_prefix)):
+                os.remove("{}queries.conf".format(MITRESaw_filename_prefix))
+            else:
+                pass
+            with open(
+                "{}queries.conf".format(MITRESaw_filename_prefix), "a"
+            ) as opmitre_queries:
+                for query in query_pairings:
+                    query_combinations = []
+                    queries_to_write = []
+                    technique_id = query.split("||")[0]
+                    technique_name = query.split("||")[1]
+                    query_strings = query.split("||")[2]
+                    if " " in query_strings:
+                        if not query_strings.startswith("hk"):
+                            if " " in query_strings:
+                                andor_query = '("{}")'.format(
+                                    query_strings.strip("'")
+                                    .replace('"', '\\"')
+                                    .replace(" ", '" and "')
+                                    .replace("*", "")
+                                    .strip('"')
+                                    .strip("\\")
+                                )
+                    else:
+                        andor_query = query_strings
+                    if '"), ("' in andor_query and not andor_query.startswith('("'):
+                        or_queries = '("{}")'.format(andor_query.replace("++","\", \""))
+                    else:
+                        or_queries = andor_query.replace("++",'", "')
+                    if not or_queries.startswith('("') and not or_queries.endswith('")'):
+                        or_queries = '("{}")'.format(or_queries)
+                    else:
+                        pass
+                    or_queries = re.sub(r'(" and "[^\"]+")(, ")', r'\1§§\2', or_queries)
+                    or_queries = re.sub(r'(" and "[^\"]+")(\))', r'\1)\2', or_queries)
+                    or_queries = re.sub(r'(", )("[^\"]+" and ")', r'\1§§\2', or_queries)
+                    or_queries = re.sub(r'(\()("[^\"]+" and ")', r'\1(\2', or_queries)
+                    or_queries = or_queries.replace('(("','("').replace('"))','")')
+                    multiple_queries = re.findall(r'§§([^§]+)(?:§§|\)$)', or_queries)
+                    if len(multiple_queries) > 0:
+                        and_queries = multiple_queries
+                        or_queries = re.sub(r'§§[^§]+(?:§§|\)$)', '', or_queries)
+                        or_queries = or_queries.replace('", , "','", "')
+                    else:
+                        and_queries = or_queries
+                    query_combinations.append("{}||{}".format(or_queries, and_queries))
+                    if str(query_combinations)[2:-2].split("||")[0] == str(query_combinations)[2:-2].split("||")[1]:
+                        final_query = str(query_combinations)[2:-2].split("||")[0]
+                    else:
+                        final_query = str(query_combinations)[2:-2].replace('", \\\', \\\', "','", "').replace("[\\', \"",'"').replace("\"\\']","\"")
+                    final_query_combo = final_query.replace("\\\\\\\\","\\\\").replace('""','"')
+                    stanza_title = "[{}: {}]".format(technique_id, technique_name)
+                    for query_combo_type in final_query_combo.split("||"):
+                        if '" and "' in query_combo_type:
+                            splunk_queries = 'where {} IN(<field_name>)  // SPL [Splunk]'.format(
+                                query_combo_type.strip("(").strip(")").replace('[\\\'"','"').replace("\\', \\'","§§").replace(
+                                    " and ", ' IN(<field_name>) AND where '
+                                ).replace("§§"," IN(<field_name>)  // SPL [Splunk]\nwhere ")
+                            )
+                            sentinel_queries = '<field_name> has_all{}  // KQL [Sentinel]'.format(
+                                query_combo_type.replace('" and "','", "').replace("[\\'\"",'("').replace("\\', \\'",')  // KQL [Sentinel]\n<field_name> has_all(')
+                            )
+                            """lucene_queries = '<field_name>:({})  // KQL [Sentinel]'.format(
+                                query_combo_type
+                            )
+                            kql_queries = '<field_name>:({})  // KQL [Sentinel]'.format(
+                                query_combo_type
+                            )
+                            dsl_query = '{{"query": {{"terms": {{"<field name>": [ "{}" ]}}}}}}  // elastic/kibana [Query DSL]'.format(
+                                query_combo_type
+                            )"""
+                            #queries_to_write("{}\n{}\n{}\n{}\n{}\n{}\n\n\n".format(stanza_title, splunk_queries, sentinel_queries, lucene_queries, kql_queries, dsl_queries))
+                            #print(stanza_title)
+                            #print(query_combo_type)
+                            #print(lucene_queries)
+                            #print(kql_queries)
+                            #print()
+                            #print()
+                            #time.sleep(4)
+                        else:
+                            splunk_query = 'where {} IN(<field_name>)  // SPL [Splunk]'.format(
+                                query_combo_type
+                            )
+                            sentinel_query = '<field_name> has_any{}  // KQL [Sentinel]'.format(
+                                query_combo_type
+                            )
+                            lucene_query = '<field_name>:({})  // Lucene [Elastic/Kibana]'.format(
+                                query_combo_type.replace("', '", '" OR "')
+                            )
+                            kql_query = '<field_name>:({})  // KQL [Elastic/Kibana]'.format(
+                                query_combo_type.replace("', '", '" or "')
+                            )
+                            dsl_query = '{{"query": {{"terms": {{"<field name>": [ "{}" ]}}}}}}  // elastic/kibana [Query DSL]'.format(
+                                query_combo_type
+                            )
+                            queries_to_write.append("{}\n{}\n{}\n{}\n{}\n{}\n\n\n".format(stanza_title, splunk_query, sentinel_query, lucene_query, kql_query, dsl_query))
+                        for query_to_write in queries_to_write:
+                            opmitre_queries.write(query_to_write)
+        else:
+            pass
+        if len(parameters) > 0:
+            print()
+        log_sources = sorted(
+            str(log_sources)[3:-3]
+            .replace(", ", "; ")
+            .replace("'; '", "; ")
+            .replace('"; "', "; ")
+            .replace("; ", ", ")
+            .split(", ")
+        )
+        counted_log_sources = Counter(log_sources)
+        log_coverage = sorted(
+            counted_log_sources.items(), key=lambda x: x[1], reverse=True
+        )
+        print()
+        print(
+            "\n\n     The following log sources are required to \033[4;37mdetect\033[1;m the aforementioned ATT&CK techniques:"
+        )
+        print()
+        time.sleep(0.5)
+        for log_count in log_coverage:
+            log = log_count[0]
+            count = log_count[1]
+            percentage = str(int(count / len(log_sources) * 100))
+            if percentage == "0":
+                percentage = "<1"
+            else:
+                pass
+            print("       - {}: \033[1;37m{}%\033[1;m".format(log, percentage))
+    else:
+        print("\n    -> No evidence could be found which match the provided criteria.")
     print("\n\n")
 
 
