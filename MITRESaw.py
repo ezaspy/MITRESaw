@@ -5,6 +5,7 @@ import pandas
 import random
 import re
 import requests
+import shutil
 import subprocess
 import time
 from argparse import RawTextHelpFormatter
@@ -29,6 +30,30 @@ parser.add_argument(
     help="Filter Threat Actor results based on specific group names and/or Software e.g. APT29,HAFNIUM,Lazurus_Group,Turla,AppleJeus,Brute Ratel C4 (use _ instead of spaces)\n Use . to not filter i.e. obtain all Threat Actors\n",
 )
 parser.add_argument(
+    "-a",
+    "--asciiart",
+    help="Don't show ASCII Art of the saw.\n\n",
+    action="store_const",
+    const=True,
+    default=False,
+)
+parser.add_argument(
+    "-o",
+    "--overwrite",
+    help="Remove all files and folder within the MITRESaw/MITRESaw directory\n\n",
+    action="store_const",
+    const=True,
+    default=False,
+)
+parser.add_argument(
+    "-n",
+    "--navigationlayers",
+    help="Obtain ATT&CK Navigator layers for Groups and Software identified during extraction of identifable evidence\n\n",
+    action="store_const",
+    const=True,
+    default=False,
+)
+parser.add_argument(
     "-q",
     "--queries",
     help="Build search queries based on results - to be imported into Splunk; Azure Sentinel; Elastic/Kibana\n\n",
@@ -50,6 +75,9 @@ args = parser.parse_args()
 operating_platforms = args.platforms
 search_terms = args.searchterms
 softwareorgroups = args.groupsorsoftware
+art = args.asciiart
+writeover = args.overwrite
+navlayers = args.navigationlayers
 queries = args.queries
 truncate = args.truncate
 
@@ -200,8 +228,9 @@ def report_finding_to_stdout(
         str(identifiers)[2:-2]
         .replace("\\\\\\\\\\\\\\\\", "\\\\\\\\")
         .replace("\\\\\\\\", "\\\\")
+        .replace('"reg" add ', "reg add ")
     )
-    print_statement = "      -> '\033[1;33m{}\033[1;m'{} '\033[1;35m{}\033[1;m'{}'\033[1;31m{}\033[1;m'".format(
+    print_statement = "      -> '\033[1;33m{}\033[1;m'{} '\033[1;32m{}\033[1;m'{}'\033[1;31m{}\033[1;m'".format(
         software_group_name,
         terms_insert,
         technique_name,
@@ -352,7 +381,7 @@ def extract_cmd_indicators(description):
     return cmd_identifiers
 
 
-def extract_indicators( # replace quotes in "reg" add 
+def extract_indicators(
     valid_procedure,
     terms,
     evidence_found,
@@ -535,52 +564,92 @@ def extract_indicators( # replace quotes in "reg" add
     return evidence_found, identifiers, previous_findings
 
 
+def upper_repl(match):
+    return match.group(1).upper()
+
+
+def lower_repl(match):
+    return match.group(1).lower()
+
+
+def elastic_query_repl(match):
+    upper_match = upper_repl(match)
+    lower_match = lower_repl(match)
+    return "[{}{}]".format(upper_match, lower_match)
+
+
 def main():
-    time.sleep(0.1)
-    print()
-    print("    -> Obtaining MITRE ATT&CK files...")
-    # obtaining framework
-    for sheet_tab in sheet_tabs:
-        sheet, tab = sheet_tab.split("-")
-        filename = "enterprise-attack-v{}-{}".format(attack_version, sheet)
-        spreadsheet = "{}.xlsx".format(filename)
-        if not os.path.exists(
-            "enterprise-attack-v{}/{}".format(attack_version, spreadsheet)
-        ):
-            mitre_spreadsheet = requests.get(
-                "https://attack.mitre.org/docs/enterprise-attack-v{}/{}".format(
-                    attack_version, spreadsheet
-                )
+    mitresaw_root = "./MITRESaw"
+    if not os.path.exists(mitresaw_root):
+        os.makedirs(mitresaw_root)
+    else:
+        pass
+    if writeover:
+        shutil.rmtree(mitresaw_root)
+    else:
+        pass
+    if not os.path.exists(mitresaw_root):
+        os.makedirs(mitresaw_root)
+    else:
+        pass
+    mitresaw_mitre_files = os.path.join(
+        mitresaw_root, "{}_mitre-attack-files".format(str(datetime.now())[0:10])
+    )
+    if not os.path.exists(mitresaw_mitre_files):
+        os.makedirs(mitresaw_mitre_files)
+        time.sleep(0.1)
+        print()
+        print("    -> Obtaining MITRE ATT&CK files...")
+        # obtaining framework
+        for sheet_tab in sheet_tabs:
+            sheet, tab = sheet_tab.split("-")
+            filename = os.path.join(
+                mitresaw_mitre_files,
+                "enterprise-attack-v{}-{}".format(attack_version, sheet),
             )
-            with open(spreadsheet, "wb") as spreadsheet_file:
-                spreadsheet_file.write(mitre_spreadsheet.content)
-        else:
-            pass
-        temp_csv = "{}temp.csv".format(filename)
-        xlsx_file = pandas.read_excel(spreadsheet, tab)
-        xlsx_file.to_csv(temp_csv, index=None, header=True)
-        with open(temp_csv) as csv_with_new_lines:
-            malformed_csv = str(csv_with_new_lines.readlines())[2:-2]
-            malformed_csv = re.sub(r"\\t", r"£\\t£", malformed_csv)
-            if "-groups" not in filename:
-                malformed_csv = re.sub(r"\\n', '(T\d{4})", r"\n\1", malformed_csv)
-                malformed_csv = re.sub(
-                    r"\\n['\"], ['\"]\\n['\"], ['\"]", r".  ", malformed_csv
+            spreadsheet = "{}.xlsx".format(filename)
+            if not os.path.exists(
+                os.path.join(
+                    mitresaw_mitre_files,
+                    "enterprise-attack-v{}/{}".format(attack_version, spreadsheet),
                 )
-                formated_csv = malformed_csv
+            ):
+                mitre_spreadsheet = requests.get(
+                    "https://attack.mitre.org/docs/enterprise-attack-v{}/{}".format(
+                        attack_version, spreadsheet.split("/")[-1]
+                    )
+                )
+                with open(spreadsheet, "wb") as spreadsheet_file:
+                    spreadsheet_file.write(mitre_spreadsheet.content)
             else:
-                malformed_csv = re.sub(r"\\n', '", r"\n", malformed_csv)
-                malformed_csv = re.sub(r"\n\"\\n', \"", r"\"\n", malformed_csv)
-                malformed_csv = re.sub(r"\n\"\n", r"\"\n", malformed_csv)
-                malformed_csv = re.sub(r"\n( ?[^G])", r"\1", malformed_csv)
-                malformed_csv = re.sub(r"\\n', \"", r"\"\n", malformed_csv)
-                malformed_csv = re.sub(r"\\n\", '", r"\"\n", malformed_csv)
-                formated_csv = malformed_csv.replace('\\"', '"')
-        with open(
-            "{}-{}.csv".format(filename, tab.replace(" ", "_")), "w"
-        ) as final_csv:
-            final_csv.write(formated_csv)
-        os.remove(temp_csv)
+                pass
+            temp_csv = "{}temp.csv".format(filename)
+            xlsx_file = pandas.read_excel(spreadsheet, tab, engine="openpyxl")
+            xlsx_file.to_csv(temp_csv, index=None, header=True)
+            with open(temp_csv) as csv_with_new_lines:
+                malformed_csv = str(csv_with_new_lines.readlines())[2:-2]
+                malformed_csv = re.sub(r"\\t", r"£\\t£", malformed_csv)
+                if "-groups" not in filename:
+                    malformed_csv = re.sub(r"\\n', '(T\d{4})", r"\n\1", malformed_csv)
+                    malformed_csv = re.sub(
+                        r"\\n['\"], ['\"]\\n['\"], ['\"]", r".  ", malformed_csv
+                    )
+                    formated_csv = malformed_csv
+                else:
+                    malformed_csv = re.sub(r"\\n', '", r"\n", malformed_csv)
+                    malformed_csv = re.sub(r"\n\"\\n', \"", r"\"\n", malformed_csv)
+                    malformed_csv = re.sub(r"\n\"\n", r"\"\n", malformed_csv)
+                    malformed_csv = re.sub(r"\n( ?[^G|S])", r"\1", malformed_csv)
+                    malformed_csv = re.sub(r"\\n', \"", r"\"\n", malformed_csv)
+                    malformed_csv = re.sub(r"\\n\", '", r"\"\n", malformed_csv)
+                    formated_csv = malformed_csv.replace('\\"', '"')
+            with open(
+                "{}-{}.csv".format(filename, tab.replace(" ", "_")), "w"
+            ) as final_csv:
+                final_csv.write(formated_csv)
+            os.remove(temp_csv)
+    else:
+        pass
     time.sleep(0.1)
     saw = """
 @                                                         ,
@@ -656,74 +725,99 @@ def main():
     )
     time.sleep(2)
     subprocess.Popen(["clear"]).communicate()
-    print_saw(saw, tagline, "                                                        ")
-    if saw:
+    if not art:
         print_saw(
-            saw, tagline, "                                                      "
+            saw, tagline, "                                                        "
         )
-        print_saw(saw, tagline, "                                                    ")
-        print_saw(saw, tagline, "                                                  ")
-        print_saw(saw, tagline, "                                                ")
-        print_saw(saw, tagline, "                                              ")
-        print_saw(saw, tagline, "                                            ")
-        print_saw(saw, tagline, "                                          ")
-        print_saw(saw, tagline, "                                        ")
-        print_saw(saw, tagline, "                                      ")
-        print_saw(saw, tagline, "                                    ")
-        print_saw(saw, tagline, "                                  ")
-        print_saw(saw, tagline, "                                ")
-        print_saw(saw, tagline, "                              ")
+        if saw:
+            print_saw(
+                saw, tagline, "                                                      "
+            )
+            print_saw(
+                saw, tagline, "                                                    "
+            )
+            print_saw(
+                saw, tagline, "                                                  "
+            )
+            print_saw(saw, tagline, "                                                ")
+            print_saw(saw, tagline, "                                              ")
+            print_saw(saw, tagline, "                                            ")
+            print_saw(saw, tagline, "                                          ")
+            print_saw(saw, tagline, "                                        ")
+            print_saw(saw, tagline, "                                      ")
+            print_saw(saw, tagline, "                                    ")
+            print_saw(saw, tagline, "                                  ")
+            print_saw(saw, tagline, "                                ")
+            print_saw(saw, tagline, "                              ")
+        else:
+            pass
+        print_saw(saw, tagline, "                            ")
     else:
         pass
-    print_saw(saw, tagline, "                            ")
     platforms = str(operating_platforms)[2:-2].split(",")
     platforms = list(filter(None, platforms))
-    print_saw(saw, tagline, "                          ")
+    if not art:
+        print_saw(saw, tagline, "                          ")
+    else:
+        pass
     terms = str(search_terms)[2:-2].split(",")
     terms = list(filter(None, terms))
-    print_saw(saw, tagline, "                        ")
+    if not art:
+        print_saw(saw, tagline, "                        ")
+    else:
+        pass
     softwaregroups = str(softwareorgroups)[2:-2].split(",")
     softwaregroups = list(filter(None, softwaregroups))
-    print_saw(saw, tagline, "                      ")
+    if not art:
+        print_saw(saw, tagline, "                      ")
+    else:
+        pass
     if saw:  # creating MITRESaw output file names
         if str(platforms) == "['.']":
             platforms_filename_insert = ""
         else:
-            platforms_filename_insert = "{}_".format(
+            platforms_filename_insert = "{}".format(
                 str(platforms)[2:-2].replace("', '", "-")
             )
         if str(terms) == "['.']":
             terms_filename_insert = ""
         else:
-            terms_filename_insert = "{}_".format(str(terms)[2:-2].replace("', '", "-"))
+            terms_filename_insert = "{}".format(str(terms)[2:-2].replace("', '", "-"))
         if str(softwaregroups) == "['.']":
             softwaregroups_filename_insert = ""
         else:
-            softwaregroups_filename_insert = "{}_".format(
+            softwaregroups_filename_insert = "{}".format(
                 str(softwaregroups)[2:-2].replace("', '", "-")
             )
-        MITRESaw_filename_prefix = "{}_{}{}{}MITRESaw-".format(
-            str(datetime.now())[0:10],
-            platforms_filename_insert,
-            terms_filename_insert,
-            softwaregroups_filename_insert,
+        mitresaw_output_directory = os.path.join(
+            mitresaw_root,
+            "{}_{}_{}".format(
+                str(datetime.now())[0:10],
+                platforms_filename_insert.replace("_", ""),
+                terms_filename_insert.replace("_", ""),
+                softwaregroups_filename_insert.replace("_", ""),
+            ),
         )
     else:
         pass
-    additional_terms = []
-    group_procedures = {}
-    groups = {}
-    software_procedures = {}
-    software = {}
-    contextual_information = {}
-    evidence_found = []
-    previous_findings = {}
-    valid_procedures = []
-    all_evidence = []
+    additional_terms, evidence_found, valid_procedures, all_evidence, log_sources = (
+        [] for i in range(5)
+    )
+    (
+        group_procedures,
+        groups,
+        software_procedures,
+        software,
+        contextual_information,
+        previous_findings,
+    ) = ({} for i in range(6))
     identifiers = ""
-    log_sources = []
-    if os.path.exists("{}techniques.csv".format(MITRESaw_filename_prefix)):
-        os.remove("{}techniques.csv".format(MITRESaw_filename_prefix))
+    if not os.path.exists(os.path.join(mitresaw_output_directory)):
+        os.makedirs(os.path.join(mitresaw_output_directory))
+    else:
+        pass
+    if os.path.exists(os.path.join(mitresaw_output_directory, "techniques.csv")):
+        os.remove(os.path.join(mitresaw_output_directory, "techniques.csv"))
     else:
         pass
     if saw:
@@ -747,10 +841,10 @@ def main():
     else:
         terms_insert = ""
     # obtaining group procedure
-    for groupsfile in os.listdir("./"):
+    for groupsfile in os.listdir(mitresaw_mitre_files):
         if groupsfile.endswith("-groups-techniques_used.csv"):
             with open(
-                "{}".format(groupsfile),
+                "{}".format(os.path.join(mitresaw_mitre_files, groupsfile)),
                 encoding="utf-8",
             ) as groups_procedure_csv:
                 for groups_procedure in groups_procedure_csv:
@@ -788,10 +882,10 @@ def main():
         else:
             pass
     # obtaining group description
-    for groupsfile in os.listdir("./"):
+    for groupsfile in os.listdir(mitresaw_mitre_files):
         if groupsfile.endswith("-groups-groups.csv"):
             with open(
-                "{}".format(groupsfile),
+                "{}".format(os.path.join(mitresaw_mitre_files, groupsfile)),
                 encoding="utf-8",
             ) as groupscsv:
                 for groups_row in groupscsv:
@@ -866,10 +960,10 @@ def main():
         else:
             pass
     # obtaining software procedure
-    for softwarefile in os.listdir("./"):
+    for softwarefile in os.listdir(mitresaw_mitre_files):
         if softwarefile.endswith("-software-techniques_used.csv"):
             with open(
-                "{}".format(softwarefile),
+                "{}".format(os.path.join(mitresaw_mitre_files, softwarefile)),
                 encoding="utf-8",
             ) as software_procedure_csv:
                 for software_procedure in software_procedure_csv:
@@ -910,10 +1004,10 @@ def main():
         else:
             pass
     # obtaining software description
-    for softwarefile in os.listdir("./"):
+    for softwarefile in os.listdir(mitresaw_mitre_files):
         if softwarefile.endswith("-software-software.csv"):
             with open(
-                "{}".format(softwarefile),
+                "{}".format(os.path.join(mitresaw_mitre_files, softwarefile)),
                 encoding="utf-8",
             ) as softwarecsv:
                 for software_row in softwarecsv:
@@ -995,21 +1089,24 @@ def main():
     contextual_information = groups | software
     print()
     print(
-        "    -> Extracting \033[1;31midentifiers\033[1;m from \033[1;35mtechniques\033[1;m based on \033[1;33mthreat actors/software\033[1;m{}".format(
+        "    -> Extracting \033[1;31mIdentifiers\033[1;m from \033[1;32mTechniques\033[1;m based on \033[1;33mThreat Actors/Software\033[1;m{}".format(
             terms_insert
         )
     )
-    print()
-    time.sleep(0.5)
-    for csvtechnique in os.listdir("./"):
+    for csvtechnique in os.listdir(mitresaw_mitre_files):
         if csvtechnique.endswith("-techniques-techniques.csv"):
-            with open("{}".format(csvtechnique), encoding="utf-8") as techniquecsv:
+            with open(
+                "{}".format(os.path.join(mitresaw_mitre_files, csvtechnique)),
+                encoding="utf-8",
+            ) as techniquecsv:
                 techniques_file_content = techniquecsv.readlines()
                 for context in str(contextual_information)[2:-7].split(": '-', '"):
+                    groupsoftware_id = context.split("||")[0]
+                    groupsoftware_name = context.split("||")[1]
                     context_id = context.split("||")[2][1:]
                     if "T{},".format(context_id) in str(techniques_file_content):
                         replaced_technique_row = re.sub(
-                            r"(,https://attack.mitre.org/techniques/T\d{4})(,)",
+                            r"(,https://attack.mitre.org/techniques/T\d{4}(?:\/\d{3})?)(,)",
                             r"\1||\2",
                             str(techniques_file_content),
                         )
@@ -1026,6 +1123,52 @@ def main():
                             technique_detection = technique_information[0][2]
                             technique_platforms = technique_information[0][3]
                             technique_data_sources = technique_information[0][4]
+                            # obtaining navigation layers for all identified threat groups and software
+                            if navlayers:
+                                if groupsoftware_id.startswith("G"):
+                                    groupsoftware = "groups"
+                                elif groupsoftware_id.startswith("S"):
+                                    groupsoftware = "software"
+                                else:
+                                    pass
+                                navlayer_output_directory = os.path.join(
+                                    mitresaw_root,
+                                    "{}_navlayers".format(str(datetime.now())[0:10]),
+                                )
+                                navlayer_json = os.path.join(
+                                    navlayer_output_directory,
+                                    "{}_{}-enterprise-layer.json".format(
+                                        groupsoftware_id, groupsoftware_name
+                                    ),
+                                )
+                                if not os.path.exists(navlayer_json):
+                                    if not os.path.exists(navlayer_output_directory):
+                                        os.makedirs(navlayer_output_directory)
+                                        print(
+                                            "     -> Obtaining ATT&CK Navigator Layers for \033[1;33mThreat Actors/Software\033[1;m related to identified \033[1;32mTechniques\033[1;m...".format(
+                                                groupsoftware_name
+                                            )
+                                        )
+                                    else:
+                                        pass
+                                    groupsoftware_navlayer = requests.get(
+                                        "https://attack.mitre.org/{}/{}/{}-enterprise-layer.json".format(
+                                            groupsoftware,
+                                            groupsoftware_id,
+                                            groupsoftware_id,
+                                        )
+                                    )
+                                    if not os.path.exists(navlayer_json):
+                                        with open(navlayer_json, "wb") as navlayer_file:
+                                            navlayer_file.write(
+                                                groupsoftware_navlayer.content
+                                            )
+                                    else:
+                                        pass
+                                else:
+                                    pass
+                            else:
+                                pass
                             if str(platforms) == "['.']":
                                 valid_procedure = "{}||{}||{}||{}||{}".format(
                                     context,
@@ -1054,6 +1197,7 @@ def main():
                         pass
         else:
             pass
+    print()
     consolidated_procedures = sorted(list(set(valid_procedures)))
     for each_procedure in consolidated_procedures:
         (
@@ -1073,14 +1217,14 @@ def main():
     if len(consolidated_techniques) > 0:
         query_pairings = []
         with open(
-            "{}techniques.csv".format(MITRESaw_filename_prefix), "w"
+            os.path.join(mitresaw_output_directory, "techniques.csv"), "w"
         ) as opmitre_csv:
             opmitre_csv.write(
                 "group_software_id,group_software_name,group_software_description,group_software_link,group_software_searchterms,technique_id,technique_name,groupsoftware_procedure,technique_description,technique_detection,technique_platforms,technique_datasources,evidence_type,evidence_indicators\n"
             )
         for dataset in consolidated_techniques:
             with open(
-                "{}techniques.csv".format(MITRESaw_filename_prefix), "a"
+                os.path.join(mitresaw_output_directory, "techniques.csv"), "a"
             ) as opmitre_csv:
                 opmitre_csv.write(
                     "{}\n".format(dataset.replace(",||,", ",").replace("||", ","))
@@ -1091,7 +1235,9 @@ def main():
                     parameters = (
                         dataset.split("||")[-1].replace("\\\\\\\\", "\\\\").lower()
                     )
-                    query_pairings.append("{}||{}||{}".format(technique_id, technique_name, parameters))
+                    query_pairings.append(
+                        "{}||{}||{}".format(technique_id, technique_name, parameters)
+                    )
                 else:
                     pass
             logsource = (
@@ -1121,13 +1267,21 @@ def main():
                     "Application Log Content",
                 )
                 .replace("Cloud Service: Cloud Service Disable", "Cloud API logging")
-                .replace("Cloud Service: Cloud Service Enumeration", "Cloud API logging")
-                .replace("Cloud Service: Cloud Service Modification", "Cloud API logging")
+                .replace(
+                    "Cloud Service: Cloud Service Enumeration", "Cloud API logging"
+                )
+                .replace(
+                    "Cloud Service: Cloud Service Modification", "Cloud API logging"
+                )
                 .replace("Cloud Storage: Cloud Storage Access", "Cloud API logging")
                 .replace("Cloud Storage: Cloud Storage Creation", "Cloud API logging")
                 .replace("Cloud Storage: Cloud Storage Deletion", "Cloud API logging")
-                .replace("Cloud Storage: Cloud Storage Enumeration", "Cloud API logging")
-                .replace("Cloud Storage: Cloud Storage Modification", "Cloud API logging")
+                .replace(
+                    "Cloud Storage: Cloud Storage Enumeration", "Cloud API logging"
+                )
+                .replace(
+                    "Cloud Storage: Cloud Storage Modification", "Cloud API logging"
+                )
                 .replace("Drive: Drive Access", "Windows event logs; setupapi.dev.log")
                 .replace("Driver: Driver Load", "Sysmon")
                 .replace("Command: Command Execution", "Command-line logging")
@@ -1135,7 +1289,8 @@ def main():
                 .replace("Container: Container Enumeration", "Command-line logging")
                 .replace("Container: Container Start", "Command-line logging")
                 .replace(
-                    "File: File Access", "Command-line logging; Windows event logs; Sysmon"
+                    "File: File Access",
+                    "Command-line logging; Windows event logs; Sysmon",
                 )
                 .replace(
                     "File: File Creation",
@@ -1151,17 +1306,21 @@ def main():
                     "Command-line logging; Windows event logs; Sysmon",
                 )
                 .replace(
-                    "Firewall: Firewall Disable", "Command-line logging; Windows event logs"
+                    "Firewall: Firewall Disable",
+                    "Command-line logging; Windows event logs",
                 )
                 .replace("Firewall: Firewall Enumeration", "Command-line logging")
                 .replace(
-                    "Firewall: Firewall Rule Modification", "Command-line logging; Windows event logs"
+                    "Firewall: Firewall Rule Modification",
+                    "Command-line logging; Windows event logs",
                 )
                 .replace(
-                    "Group: Group Enumeration", "Command-line logging; Windows event logs"
+                    "Group: Group Enumeration",
+                    "Command-line logging; Windows event logs",
                 )
                 .replace(
-                    "Group: Group Modification", "Command-line logging; Windows event logs"
+                    "Group: Group Modification",
+                    "Command-line logging; Windows event logs",
                 )
                 .replace("Image: Image Creation", "Cloud API logging")
                 .replace("Image: Image Deletion", "Cloud API logging")
@@ -1178,7 +1337,9 @@ def main():
                     "Windows event logs; *nix /var/log",
                 )
                 .replace("Module: Module Load", "Command-line logging; Sysmon")
-                .replace("Named Pipe: Named Pipe Metadata", "Command-line logging; Sysmon")
+                .replace(
+                    "Named Pipe: Named Pipe Metadata", "Command-line logging; Sysmon"
+                )
                 .replace(
                     "Network Share: Network Share Access",
                     "Command-line logging; Windows event logs",
@@ -1217,8 +1378,13 @@ def main():
                     "PowerShell Script Block logging; Command-line logging; Windows event logs; Microsoft-Windows-WMI-Activity/Trace & WMITracing.log",
                 )
                 .replace("Sensor Health: Host Status", "Host Availability logging")
-                .replace("Service: Service Creation", "Windows event logs; *nix /var/log")
-                .replace("Service: Service Metadata", "Command-line logging; Windows event logs; *nix /var/log")
+                .replace(
+                    "Service: Service Creation", "Windows event logs; *nix /var/log"
+                )
+                .replace(
+                    "Service: Service Metadata",
+                    "Command-line logging; Windows event logs; *nix /var/log",
+                )
                 .replace(
                     "Service: Service Modification", "Windows event logs; *nix /var/log"
                 )
@@ -1269,13 +1435,24 @@ def main():
                 )
             )
             log_sources.append(logsource)
+        mitresaw_techniques = re.findall(r"\|\|(T\d{3}[\d\.]+)\|\|", str(consolidated_techniques))
+        mitresaw_techniques = list(set(mitresaw_techniques))
+        mitresaw_techniques_insert = str(mitresaw_techniques)[2:-2].replace("', '", '", "comment": "", "score": 1, "color": "#66b1ff", "showSubtechniques": false}}, {{"techniqueID": "')
+        mitresaw_navlayer = '{{"description": "Enterprise techniques used by various Threat Actors/Software, produced by MITRESaw", "name": "{}", "domain": "enterprise-attack", "versions": {{"layer": "4.4", "attack": "13", "navigator": "4.8.1"}}, "techniques": [{{"techniqueID": "{}", "comment": "", "score": 1, "color": "#66b1ff", "showSubtechniques": false}}], "gradient": {{"colors": ["#ffffff", "#66b1ff"], "minValue": 0, "maxValue": 1}}, "legendItems": [{{"label": "identified from MITRESaw analysis", "color": "#66b1ff"}}]}}\n'.format(mitresaw_output_directory.split("/")[2][11:], mitresaw_techniques_insert)
+        with open(os.path.join(mitresaw_output_directory, "enterprise-layer.json"), "w") as mitresaw_navlayer_json:
+           mitresaw_navlayer_json.write(mitresaw_navlayer.replace("{{","{").replace("}}","}"))
         if queries:
-            if os.path.exists("{}queries.conf".format(MITRESaw_filename_prefix)):
-                os.remove("{}queries.conf".format(MITRESaw_filename_prefix))
+            print(
+                "\n     -> Building Queries for identified \033[1;32mTechniques\033[1;m...".format(
+                    groupsoftware_name
+                )
+            )
+            if os.path.exists(os.path.join(mitresaw_output_directory, "queries.conf")):
+                os.remove(os.path.join(mitresaw_output_directory, "queries.conf"))
             else:
                 pass
             with open(
-                "{}queries.conf".format(MITRESaw_filename_prefix), "a"
+                os.path.join(mitresaw_output_directory, "queries.conf"), "a"
             ) as opmitre_queries:
                 for query in query_pairings:
                     query_combinations = []
@@ -1297,82 +1474,188 @@ def main():
                     else:
                         andor_query = query_strings
                     if '"), ("' in andor_query and not andor_query.startswith('("'):
-                        or_queries = '("{}")'.format(andor_query.replace("++","\", \""))
+                        or_queries = '("{}")'.format(andor_query.replace("++", '", "'))
                     else:
-                        or_queries = andor_query.replace("++",'", "')
-                    if not or_queries.startswith('("') and not or_queries.endswith('")'):
+                        or_queries = andor_query.replace("++", '", "')
+                    if not or_queries.startswith('("') and not or_queries.endswith(
+                        '")'
+                    ):
                         or_queries = '("{}")'.format(or_queries)
                     else:
                         pass
-                    or_queries = re.sub(r'(" and "[^\"]+")(, ")', r'\1§§\2', or_queries)
-                    or_queries = re.sub(r'(" and "[^\"]+")(\))', r'\1)\2', or_queries)
-                    or_queries = re.sub(r'(", )("[^\"]+" and ")', r'\1§§\2', or_queries)
-                    or_queries = re.sub(r'(\()("[^\"]+" and ")', r'\1(\2', or_queries)
-                    or_queries = or_queries.replace('(("','("').replace('"))','")')
-                    multiple_queries = re.findall(r'§§([^§]+)(?:§§|\)$)', or_queries)
+                    or_queries = re.sub(r'(" and "[^\"]+")(, ")', r"\1§§\2", or_queries)
+                    or_queries = re.sub(r'(" and "[^\"]+")(\))', r"\1)\2", or_queries)
+                    or_queries = re.sub(r'(", )("[^\"]+" and ")', r"\1§§\2", or_queries)
+                    or_queries = re.sub(r'(\()("[^\"]+" and ")', r"\1(\2", or_queries)
+                    or_queries = or_queries.replace('(("', '("').replace('"))', '")')
+                    multiple_queries = re.findall(r"§§([^§]+)(?:§§|\)$)", or_queries)
                     if len(multiple_queries) > 0:
                         and_queries = multiple_queries
-                        or_queries = re.sub(r'§§[^§]+(?:§§|\)$)', '', or_queries)
-                        or_queries = or_queries.replace('", , "','", "')
+                        or_queries = re.sub(r"§§[^§]+(?:§§|\)$)", "", or_queries)
+                        or_queries = or_queries.replace('", , "', '", "')
                     else:
                         and_queries = or_queries
                     query_combinations.append("{}||{}".format(or_queries, and_queries))
-                    if str(query_combinations)[2:-2].split("||")[0] == str(query_combinations)[2:-2].split("||")[1]:
+                    if (
+                        str(query_combinations)[2:-2].split("||")[0]
+                        == str(query_combinations)[2:-2].split("||")[1]
+                    ):
                         final_query = str(query_combinations)[2:-2].split("||")[0]
                     else:
-                        final_query = str(query_combinations)[2:-2].replace('", \\\', \\\', "','", "').replace("[\\', \"",'"').replace("\"\\']","\"")
-                    final_query_combo = final_query.replace("\\\\\\\\","\\\\").replace('""','"')
-                    stanza_title = "[{}: {}]".format(technique_id, technique_name)
+                        final_query = (
+                            str(query_combinations)[2:-2]
+                            .replace("\", \\', \\', \"", '", "')
+                            .replace("[\\', \"", '"')
+                            .replace("\"\\']", '"')
+                        )
+                    final_query_combo = final_query.replace("\\\\\\\\", "\\\\").replace(
+                        '""', '"'
+                    )
+                    stanza_title = str("[{}: {}]").format(technique_id, technique_name)
                     for query_combo_type in final_query_combo.split("||"):
                         if '" and "' in query_combo_type:
-                            splunk_queries = 'where {} IN(<field_name>)  // SPL [Splunk]'.format(
-                                query_combo_type.strip("(").strip(")").replace('[\\\'"','"').replace("\\', \\'","§§").replace(
-                                    " and ", ' IN(<field_name>) AND where '
-                                ).replace("§§"," IN(<field_name>)  // SPL [Splunk]\nwhere ")
+                            splunk_queries = (
+                                "where {} IN(<field_name>)  // SPL [Splunk]".format(
+                                    query_combo_type.strip("(")
+                                    .strip(")")
+                                    .replace("[\\'\"", '"')
+                                    .replace("\\', \\'", "§§")
+                                    .replace(" and ", " IN(<field_name>) AND where ")
+                                    .replace(
+                                        "§§",
+                                        " IN(<field_name>)  // SPL [Splunk]\nwhere ",
+                                    )
+                                )
                             )
-                            sentinel_queries = '<field_name> has_all{}  // KQL [Sentinel]'.format(
-                                query_combo_type.replace('" and "','", "').replace("[\\'\"",'("').replace("\\', \\'",')  // KQL [Sentinel]\n<field_name> has_all(')
+                            sentinel_queries = (
+                                "<field_name> has_all{})  // KQL [Sentinel]".format(
+                                    query_combo_type.replace('" and "', '", "')
+                                    .replace("[\\'\"", '("')
+                                    .replace(
+                                        "\\', \\'",
+                                        ")  // KQL [Sentinel]\n<field_name> has_all(",
+                                    )
+                                )
                             )
-                            """lucene_queries = '<field_name>:({})  // KQL [Sentinel]'.format(
-                                query_combo_type
+                            kql_queries = (
+                                "<field_name>:({})  // KQL [Elastic/Kibana]".format(
+                                    query_combo_type.strip("(")
+                                    .strip(")")
+                                    .replace("[\\'\"", '"')
+                                    .replace("\\', \\'", "§§")
+                                    .replace(
+                                        "§§",
+                                        ")  // KQL [elastic/Kibana]\n<field_name>:(",
+                                    )
+                                    .replace('", "', '" OR "')
+                                    .replace('" and "', '" AND "')
+                                )
                             )
-                            kql_queries = '<field_name>:({})  // KQL [Sentinel]'.format(
-                                query_combo_type
+                            lucene_queries = (
+                                (
+                                    "/.*{}.*/  // Lucene [elastic/Kibana]".format(
+                                        re.sub(
+                                            r"(\w)",
+                                            elastic_query_repl,
+                                            query_combo_type.replace(
+                                                '" and "', "¬¬"
+                                            ).replace("/", "\\\\/"),
+                                        )
+                                        .strip("(")
+                                        .strip(")")
+                                        .strip('"')
+                                        .replace("[\\'\"", '"')
+                                        .replace("\\', \\'", "§§")
+                                        .replace(".", "\\\\.")
+                                        .replace(" ", "\\\\ ")
+                                        .replace('", "', '" or "')
+                                        .replace(
+                                            "§§",
+                                            ".*/  // Lucene [elastic/Kibana]\n/.*",
+                                        )
+                                        .replace("¬¬", ".*")
+                                        .replace(
+                                            '*,\\\\ "',
+                                            ".*/  // Lucene [elastic/Kibana]\n/.*",
+                                        )
+                                        .replace(
+                                            '",\\\\ "',
+                                            ".*/  // Lucene [elastic/Kibana]\n/.*",
+                                        )
+                                        .replace('/.*"', "/.*")
+                                        .replace('".*/', ".*/")
+                                    )
+                                )
+                                .replace('/.*"[', "/.*[")
+                                .replace("-", "\\\\-")
+                                .replace("(", "\\\\(")
+                                .replace(")", "\\\\)")
+                                .replace('"[remote" and "address]', "[remote address]")
+                                .replace("\n/..*/  // Lucene [elastic/Kibana]\n", "")
                             )
-                            dsl_query = '{{"query": {{"terms": {{"<field name>": [ "{}" ]}}}}}}  // elastic/kibana [Query DSL]'.format(
-                                query_combo_type
-                            )"""
-                            #queries_to_write("{}\n{}\n{}\n{}\n{}\n{}\n\n\n".format(stanza_title, splunk_queries, sentinel_queries, lucene_queries, kql_queries, dsl_queries))
-                            #print(stanza_title)
-                            #print(query_combo_type)
-                            #print(lucene_queries)
-                            #print(kql_queries)
-                            #print()
-                            #print()
-                            #time.sleep(4)
+                            dsl_queries = '{{"bool": {{"must": [{{"query_string": {{"query": "{}","fields": ["<field_name>","<field_name>"]}}}}]}}}}'.format(
+                                lucene_queries.replace(" Lucene ", " Query DSL ")
+                            )
+                            elastic_api_queries = '{{"query": {{"terms": {{"<field name>": [ "{}" ]}}}}}}  // API [elastic/Kibana]'.format(
+                                lucene_queries.replace(" Lucene ", " Query DSL ")
+                            )
+                            queries_to_write.append(
+                                "{}\n{}\n{}\n{}\n{}\n{}\n{}\n\n\n".format(
+                                    stanza_title,
+                                    splunk_queries,
+                                    sentinel_queries,
+                                    lucene_queries,
+                                    kql_queries,
+                                    dsl_queries,
+                                    elastic_api_queries,
+                                )
+                            )
                         else:
-                            splunk_query = 'where {} IN(<field_name>)  // SPL [Splunk]'.format(
+                            splunk_query = (
+                                "where {} IN(<field_name>)  // SPL [Splunk]".format(
+                                    query_combo_type
+                                )
+                            )
+                            sentinel_query = (
+                                "<field_name> has_any{}  // KQL [Sentinel]".format(
+                                    query_combo_type
+                                )
+                            )
+                            kql_query = (
+                                "<field_name>:({})  // KQL [elastic/Kibana]".format(
+                                    query_combo_type.replace("', '", '" or "')
+                                )
+                            )
+                            lucene_query = (
+                                "/.*{}.*/  // Lucene [elastic/Kibana]".format(
+                                    re.sub(
+                                        r"(\w)",
+                                        elastic_query_repl,
+                                        query_combo_type,
+                                    ).replace("', '", '" OR "')
+                                )
+                            )
+                            dsl_query = '{{"bool": {{"must": [{{"query_string": {{"query": "{}","fields": ["<field_name>","<field_name>"]}}}}]}}}}  // API [elastic/Kibana]'.format(
                                 query_combo_type
                             )
-                            sentinel_query = '<field_name> has_any{}  // KQL [Sentinel]'.format(
+                            elastic_api_query = '{{"query": {{"terms": {{"<field name>": [ "{}" ]}}}}}}  // Query DSL [elastic/Kibana]'.format(
                                 query_combo_type
                             )
-                            lucene_query = '<field_name>:({})  // Lucene [Elastic/Kibana]'.format(
-                                query_combo_type.replace("', '", '" OR "')
+                            queries_to_write.append(
+                                "{}\n{}\n{}\n{}\n{}\n{}\n{}\n\n\n".format(
+                                    stanza_title,
+                                    splunk_query,
+                                    sentinel_query,
+                                    lucene_query,
+                                    kql_query,
+                                    dsl_query,
+                                    elastic_api_query,
+                                )
                             )
-                            kql_query = '<field_name>:({})  // KQL [Elastic/Kibana]'.format(
-                                query_combo_type.replace("', '", '" or "')
-                            )
-                            dsl_query = '{{"query": {{"terms": {{"<field name>": [ "{}" ]}}}}}}  // elastic/kibana [Query DSL]'.format(
-                                query_combo_type
-                            )
-                            queries_to_write.append("{}\n{}\n{}\n{}\n{}\n{}\n\n\n".format(stanza_title, splunk_query, sentinel_query, lucene_query, kql_query, dsl_query))
                         for query_to_write in queries_to_write:
                             opmitre_queries.write(query_to_write)
         else:
             pass
-        if len(parameters) > 0:
-            print()
         log_sources = sorted(
             str(log_sources)[3:-3]
             .replace(", ", "; ")
@@ -1385,9 +1668,8 @@ def main():
         log_coverage = sorted(
             counted_log_sources.items(), key=lambda x: x[1], reverse=True
         )
-        print()
         print(
-            "\n\n     The following log sources are required to \033[4;37mdetect\033[1;m the aforementioned ATT&CK techniques:"
+            "\n     The following log sources are required to \033[4;37mdetect\033[1;m the aforementioned ATT&CK techniques:"
         )
         print()
         time.sleep(0.5)

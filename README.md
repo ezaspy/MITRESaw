@@ -1,25 +1,30 @@
 <!-- PROJECT LOGO -->
 ```
-                                                                 ,╓▄▄#ΦN╥
-                             ╓▓▀▀▓                     ,╓▄▄▄▓▓███╫╫▓██▌╫▓
-                             ║▌,,▓▌           ,╦▄▄╦B▀▀██╫╫╫╫╫╫╫╫╫╫╫╫╫╫╫▓▓█▄
-                              ▓████      ,▄███╫░░╫╫╫▓▓▄░╨███╫╫▀╜"╙█▓╫╫╫╫▓▓▓▓▄
-                              ╙███╫▌,╥╦]Ñ░░░░░░░░╨▀╗▄▒▀█▓▄░▀╫U    █▀▀▓▓▓▓▓▓██▓╕
-                               ▓Ñ░░░░░╦╫╫╫╫╫╫╫╫╫Ñ╦░░░░▀╦░▀▓╦░╨▓K╗▄,    ▀▓▓▓▓██▓▌
-                              ,╦░░╫╫╫╫╫╫╫╫╫╫╫╫╫╫╫╫╫╫╫Ñ░░░╫░╫╫Ñ░╫╫╫╫N     ▀▓▓▓╫██▌
-                            ,]░░╫╫╫╫╫╫▓▓████████▓▓╫╫╫╫╫Ñ░░░µ░╠▄░░▄▄▄▒Ñ╥    ▀▓▓▓▓▓▌
-                ╓▄▄▄╫█╫    ,Ñ░╫╫╫╫╫╫▓███████████████▓╫╫╫╫Ñ░░╬░╟▓░╟▓▓▓▌░     ╟▓▓▓▓▓
-                ║███╫█╫   .░░╫╫╫╫╫████▓▓▓▓█▓▓█▓▓▓▓████╫╫╫╫Ñ░░M░▀M░▀█▓▓░N  ,▄█▓▓▓▓▓M
-                ╙▀▀▀╫█╫   ]░╬╫╫╫╫███▓▓▓▓▀░╫╦╬░░╟▓▓▓▓███╫╫╫╫░░Ñ]╙▀░║████████╫╫╫╬Ñ╫Å
-                 ║▓▓╫█╫▓▓▓░░╫╫╫╫▓██▓▓▓▓░╫Ñ░▄╬░╫Ñ░▓▓▓▓██▓╫╫╫Ñ░░└░░░▓█▀▀▀░╬╫╫▀╙,,╬M
-                 ╙▀▀╫█╫    `██████▓▓▓▓▌░╫Ñ╟▓▓M╫Ñ░▓▓▓▓▓████▌       ▐▓Ω     `╙╜╜^
-                 ,╩▀╫╥╦╦╦╦╬╨╨╨░╠▀▀▀▀▀░░░░░░╫░░░▀▀▀▀▀░░╨╨╨½╦╦╦╦╦╦╦▀▀▀╦╦
-                ▀▀▀▀▀▀▀▀▀▀▀▀▀████▀▀██████████████████▀▀████▀▀▀▀▀▀▀▀▀▀▀▀¬
+                                                                         ,
+                                 ╓╗╗,                          ,╓▄▄▄Φ▓▓██▌╫D
+                                ║▌ `▓L            ,,, ╓▄▄▄Φ▓▓▀▀▀╫╫╫╫╫╫╫▀▀╫▓▓▄
+                                 ▓▄▓▓▓        ,▄▄B░▀╫Ñ╬░░╫╫▓▓▓▓╫╫╫╫▓▓▓╫╫╫╫╣▓▓▓▄
+                                 ║████L   ,╓#▀▀▀╨╫ÑÑ╦▄▒▀╣▓▄▄▀╣▌╫▀    ██╫╫╫╫▓▓╫▓▓φ
+                                  ▓╫╫╫▀]Ñ░░░░ÑÑÑÑ░░░░░╠▀W▄╠▀▓▒░╫Ñ╖   ╙└"╜▀▓▓▓▓▓█▓▓
+                                  ║░░░╦╬╫╫╫╫╫╫╫╫╫╫╫╫╫ÑÑ░░░╠Ñ░╨╫Ñ░╫╫╫╫N     ▀▓▓▓╫██▓╕
+                                ,]░╦╬╫╫╫╫╫╫╫▓▓▓▓▓▓╫╫╫╫╫╫╫Ñ░░╠░░╫M░╠╫╫╫╫╦,    ▀▓▓▓▓▓▓⌐
+                       ╗▄╦     ]░░╬╫╫╫╫╫▓▓██████████▓▓▒╫╫╫╫Ñ░░╟▒╟▓▒ñ▓▓▓▓░N    ╙▓▓▓▓▓▓
+                   ║███╫█╫    ]░░╫╫╫╫╫▓███▓▓▓▓▓▓▓▓▓▓███▓╫╫╫╫╫░░╟▒╟▓Ü╟▓▓▓▓░H    ╟▓▓▓▓▓L
+                   ║███╫█╫   ]░░╫╫╫╫▓██▓╫▓▓▓▀▀╠╠╬▀▓▓▓╫▓██▓╫╫╫╫░░ÑÑ╠▄░╠▓▓▓▄▄▄▄▄▓▓▓╫╫╫╫
+                    ╓▄▄╫█╫╖╖╖╦░╫╫╫╫╫██▓▓▓▓▀░╬Ñ╣╬╫Ñ░╟▓▓▓▓██╫╫╫╫Ñ░╦]░░░║████▀▀╫╫╫▓╩╨╟╫
+                    ╟▓▓╫█╫▀▀▀╩╬╩╫╫▓██▓▓▓▓▌░╫░╟▓▓K╫Ñ░▓▓▓▓╫██▓▒╩╩╩╩ ╙╩╨▀▓M╨╩╨╙╝╣N╦╗Φ╝
+                       ╫█╫     ▀███▀╣▓▓▓▓▓░╫Ñ░╠▀░╫Ü░▓▓▓▓▓▀▀███╕      ▐▓▌╖
+                   ▄▄▄▄▓█▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄╛
+                                ▀╩╫╫╫╠╣▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▓▀░╫╫╫╫▌
+                                 ╗▄╫╫Ñ░╠▀▓▓▓▓▓▓▓▓▓▓▓▓▀░╦╬╫╫∩
+                                   `⌠╫╫╫Ñ░░Å╣▀▀▀▀▀▒░╦╬╫╫╫`█
+                                    ╙╙""╫╫╫½╫╫╫╬╫╫╫╫╫M"▓╛
+                                       └╙└ ▄▓╩`║▓╩ Å▀
 ```
 <p align="center">
   <h1 align="center">MITRESaw</h1>
   <p align="center">
-    Collect MITRE ATT&amp;CK framework for Enterprise into CSV and JSON, for ATTACK Navigator.
+    Collect MITRE ATT&amp;CK framework for Enterprise into CSV JSON, for ATTACK Navigator based on Threat Actors discovered.
     <br><br>
     <a href="https://mit-license.org">
       <img src="https://img.shields.io/github/license/ezaspy/MITRESaw" alt="License: MIT">
@@ -49,6 +54,7 @@
 ## Table of Contents
 
 * [About the Project](#about-the-project)
+* [Installation](#installation)
 * [Usage](#usage)
 * [Contributing](#contributing)
 * [License](#license)
@@ -65,10 +71,26 @@ At its core, MITRESaw creates a CSV-formatted version of the [MITRE ATT&amp;CK F
 MITRESaw can also create search queries based on extracted indicators (aligned with Threat Group TTPs). Searches currently provided are compatible with Splunk, Azure Sentinel and Elastic/Kibana.
 <br><br>
 
+<!-- INSTALLATION -->
+## Installation
+
+`python3 -m pip install -r requirements.txt`
+<br><br>
 
 <!-- USAGE EXAMPLES -->
 ## Usage
 `python3 MITRESaw.py platforms searchterms threatgroups [-q] [-t]`
+
+To display usage, simply run: `python3 MITRESaw.py -h`
+
+    ```usage: MITRESaw.py [-h] platforms searchterms threatgroups [-q] [-t]
+
+    optional arguments:
+      -h, --help            show this help message and exit
+      -q  --queries         Build search queries based on results - to be imported into Splunk; Azure Sentinel; Elastic/Kibana
+      -t  --truncate        Truncate printing of indicators for a cleaner output (they are still written to output file)
+```
+
 ### Example
 `python3 MITRESaw.py Windows,Linux,macOS mining,technology,defense,law . -q`
 <br><br>
