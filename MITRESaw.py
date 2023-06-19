@@ -38,17 +38,17 @@ parser.add_argument(
     default=False,
 )
 parser.add_argument(
-    "-o",
-    "--overwrite",
-    help="Remove all files and folder within the MITRESaw/MITRESaw directory\n\n",
+    "-n",
+    "--navigationlayers",
+    help="Obtain ATT&CK Navigator layers for Groups and Software identified during extraction of identifable evidence\n\n",
     action="store_const",
     const=True,
     default=False,
 )
 parser.add_argument(
-    "-n",
-    "--navigationlayers",
-    help="Obtain ATT&CK Navigator layers for Groups and Software identified during extraction of identifable evidence\n\n",
+    "-o",
+    "--overwrite",
+    help="Remove all files and folder within the MITRESaw/MITRESaw directory\n\n",
     action="store_const",
     const=True,
     default=False,

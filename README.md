@@ -79,13 +79,13 @@ MITRESaw can also create search queries based on extracted indicators (aligned w
 
 <!-- USAGE EXAMPLES -->
 ## Usage
-`python3 MITRESaw.py platforms searchterms threatgroups [-q] [-t]`
+`python3 MITRESaw.py platforms searchterms threatgroups [-a] [-n] [-o] [-q] [-t]`
 
 To display usage, simply run: `python3 MITRESaw.py -h`
+```
+usage: MITRESaw.py [-h] platforms searchterms threatgroups [-q] [-t]
 
-    ```usage: MITRESaw.py [-h] platforms searchterms threatgroups [-q] [-t]
-
-    optional arguments:
+optional arguments:
       -h, --help            show this help message and exit
       -q  --queries         Build search queries based on results - to be imported into Splunk; Azure Sentinel; Elastic/Kibana
       -t  --truncate        Truncate printing of indicators for a cleaner output (they are still written to output file)
