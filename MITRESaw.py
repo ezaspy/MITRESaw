@@ -39,7 +39,7 @@ parser.add_argument(
 )
 parser.add_argument(
     "-n",
-    "--navigationlayers",
+    "--navlayers",
     help="Obtain ATT&CK Navigator layers for Groups and Software identified during extraction of identifable evidence\n\n",
     action="store_const",
     const=True,
