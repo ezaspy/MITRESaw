@@ -32,7 +32,7 @@ parser.add_argument(
 parser.add_argument(
     "-a",
     "--asciiart",
-    help="Don't show ASCII Art of the saw.\n\n",
+    help="Don't show ASCII Art of the saw.\n",
     action="store_const",
     const=True,
     default=False,
@@ -40,7 +40,7 @@ parser.add_argument(
 parser.add_argument(
     "-n",
     "--navlayers",
-    help="Obtain ATT&CK Navigator layers for Groups and Software identified during extraction of identifable evidence\n\n",
+    help="Obtain ATT&CK Navigator layers for Groups and Software identified during extraction of identifable evidence\n",
     action="store_const",
     const=True,
     default=False,
@@ -48,7 +48,7 @@ parser.add_argument(
 parser.add_argument(
     "-o",
     "--overwrite",
-    help="Remove all files and folder within the MITRESaw/MITRESaw directory\n\n",
+    help="Remove all files and folder within the MITRESaw/MITRESaw directory\n",
     action="store_const",
     const=True,
     default=False,
@@ -56,7 +56,7 @@ parser.add_argument(
 parser.add_argument(
     "-q",
     "--queries",
-    help="Build search queries based on results - to be imported into Splunk; Azure Sentinel; Elastic/Kibana\n\n",
+    help="Build search queries based on results - to be imported into Splunk; Azure Sentinel; Elastic/Kibana\n",
     action="store_const",
     const=True,
     default=False,
@@ -64,7 +64,7 @@ parser.add_argument(
 parser.add_argument(
     "-t",
     "--truncate",
-    help="Truncate printing of indicators for a cleaner output (they are still written to output file)\n\n",
+    help="Truncate printing of indicators for a cleaner output (they are still written to output file)\n",
     action="store_const",
     const=True,
     default=False,
@@ -77,7 +77,7 @@ search_terms = args.searchterms
 softwareorgroups = args.groupsorsoftware
 art = args.asciiart
 writeover = args.overwrite
-navlayers = args.navigationlayers
+navigationlayers = args.navlayers
 queries = args.queries
 truncate = args.truncate
 
@@ -1124,7 +1124,7 @@ def main():
                             technique_platforms = technique_information[0][3]
                             technique_data_sources = technique_information[0][4]
                             # obtaining navigation layers for all identified threat groups and software
-                            if navlayers:
+                            if navigationlayers:
                                 if groupsoftware_id.startswith("G"):
                                     groupsoftware = "groups"
                                 elif groupsoftware_id.startswith("S"):
@@ -1133,7 +1133,7 @@ def main():
                                     pass
                                 navlayer_output_directory = os.path.join(
                                     mitresaw_root,
-                                    "{}_navlayers".format(str(datetime.now())[0:10]),
+                                    "{}_navigationlayers".format(str(datetime.now())[0:10]),
                                 )
                                 navlayer_json = os.path.join(
                                     navlayer_output_directory,
