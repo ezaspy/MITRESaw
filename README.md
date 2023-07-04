@@ -110,6 +110,16 @@ optional arguments:
 ### Notices
 
 Because the MITRE ATT&amp;CK has been built and is managed in the United States, the keywords provided need to be in US English, as opposed UK English. An example where results would not reflect the search terms provided is the word defense (US)/defence (UK).
+I have also had discussions with peers about how to leverage the ATT&amp;CK STIX data compiled by MITRE instead of the Excel SpreadSheets but the data provided in the STIX data doesn't contain the same Group/Software information as the SpreadSheets. Although the STIX data does detail the procedure examples of each Group/Software(/Campaign) leverages each respective technique, nowhere in the STIX dataset is there a description for each of the Groups/Software/Campaigns and without this, MITRESaw cannot ascertain which Threat Actors target certain industries using the STIX dataset.<br>
+For example, for [APT41](https://attack.mitre.org/groups/G0096/)<br>
+- Description
+```
+APT41 is a threat group that researchers have assessed as Chinese state-sponsored espionage group that also conducts financially-motivated operations. Active since at least 2012, APT41 has been observed targeting healthcare, telecom, technology, and video game industries in 14 countries. APT41 overlaps at least partially with public reporting on groups including BARIUM and Winnti Group.
+```
+- Procedure example ***Create or Modify System Process: Windows Service***
+```
+APT41 modified legitimate Windows services to install malware backdoors. APT41 created the StorSyncSvc service to provide persistence for Cobalt Strike.
+```
 <br><br><br>
 
 
