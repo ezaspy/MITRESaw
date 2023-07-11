@@ -24,7 +24,7 @@
 <p align="center">
   <h1 align="center">MITRESaw</h1>
   <p align="center">
-    Collect MITRE ATT&amp;CK framework for Enterprise into CSV JSON, for ATTACK Navigator based on Threat Actors discovered.
+    Cut through MITRE ATT&amp;CK framework and extract relevant identifiers for searching and hunting.
     <br><br>
     <a href="https://mit-license.org">
       <img src="https://img.shields.io/github/license/ezaspy/MITRESaw" alt="License: MIT">
@@ -68,7 +68,7 @@
 ## About The Project
 
 At its core, MITRESaw creates a CSV-formatted version of the [MITRE ATT&amp;CK Framework](https://attack.mitre.org) and outputs individual Threat Actor [ATT&amp;CK Navigator](https://mitre-attack.github.io/attack-navigator/) JSON files, depending on keywords provided.<br>
-MITRESaw can also create search queries based on extracted indicators (aligned with Threat Group TTPs). Searches currently provided are compatible with Splunk, Azure Sentinel and Elastic/Kibana.
+MITRESaw has evolved to also produce search queries based on extracted indicators (aligned with Threat Group TTPs). Searches currently provided are compatible with Splunk, Azure Sentinel and Elastic/Kibana. SIGMA will be included soon.
 <br><br>
 
 <!-- INSTALLATION -->

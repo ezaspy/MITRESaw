@@ -16,7 +16,7 @@ from MITRESaw.toolbox.query import build_queries
 from MITRESaw.toolbox.saw import print_saw
 
 
-def mitresaw(
+def mainsaw(
     operating_platforms,
     search_terms,
     provided_groups,
@@ -591,7 +591,7 @@ def mitresaw(
                     "Windows event logs; *nix /var/log",
                 )
                 .replace(
-                    "Scheduled Job: Scheduled Job Metdata",
+                    "Scheduled Job: Scheduled Job Metadata",
                     "",
                 )
                 .replace(
@@ -630,7 +630,7 @@ def mitresaw(
                     "Windows event logs; *nix /var/log/auth & access/authentication",
                 )
                 .replace(
-                    "User Account: User Account Metdata",
+                    "User Account: User Account Metadata",
                     "",
                 )
                 .replace(

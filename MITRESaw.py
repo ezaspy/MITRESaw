@@ -1,7 +1,7 @@
 #!/usr/bin/env python3 -tt
 import argparse
 from argparse import RawTextHelpFormatter
-from MITRESaw.toolbox.mitresaw import mitresaw
+from MITRESaw.toolbox.main import mainsaw
 
 parser = argparse.ArgumentParser(formatter_class=RawTextHelpFormatter)
 parser.add_argument(
@@ -95,7 +95,7 @@ group_techniques = {}
 
 
 def main():
-    mitresaw(
+    mainsaw(
         operating_platforms,
         search_terms,
         provided_groups,
