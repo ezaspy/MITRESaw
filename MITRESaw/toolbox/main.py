@@ -485,21 +485,21 @@ def mainsaw(
                     "Application Log: Application Log Content",
                     "Application Log Content",
                 )
-                .replace("Cloud Service: Cloud Service Disable", "Cloud API logging")
+                .replace("Cloud Service: Cloud Service Disable", "Cloud API logging; Cloud Audit logging")
                 .replace(
-                    "Cloud Service: Cloud Service Enumeration", "Cloud API logging"
+                    "Cloud Service: Cloud Service Enumeration", "Cloud API logging; Cloud Audit logging"
                 )
                 .replace(
-                    "Cloud Service: Cloud Service Modification", "Cloud API logging"
+                    "Cloud Service: Cloud Service Modification", "Cloud API logging; Cloud Audit logging"
                 )
-                .replace("Cloud Storage: Cloud Storage Access", "Cloud API logging")
-                .replace("Cloud Storage: Cloud Storage Creation", "Cloud API logging")
-                .replace("Cloud Storage: Cloud Storage Deletion", "Cloud API logging")
+                .replace("Cloud Storage: Cloud Storage Access", "Cloud API logging; Cloud Audit logging")
+                .replace("Cloud Storage: Cloud Storage Creation", "Cloud API logging; Cloud Audit logging")
+                .replace("Cloud Storage: Cloud Storage Deletion", "Cloud API logging; Cloud Audit logging")
                 .replace(
-                    "Cloud Storage: Cloud Storage Enumeration", "Cloud API logging"
+                    "Cloud Storage: Cloud Storage Enumeration", "Cloud API logging; Cloud Audit logging"
                 )
                 .replace(
-                    "Cloud Storage: Cloud Storage Modification", "Cloud API logging"
+                    "Cloud Storage: Cloud Storage Modification", "Cloud API logging; Cloud Audit logging"
                 )
                 .replace("Drive: Drive Access", "Windows event logs; setupapi.dev.log")
                 .replace("Drive: Drive Modification", "Windows event logs; setupapi.dev.log")
@@ -613,10 +613,10 @@ def mainsaw(
                 .replace(
                     "Service: Service Modification", "Windows event logs; *nix /var/log"
                 )
-                .replace("Snapshot: Snapshot Creation", "Cloud API logging")
-                .replace("Snapshot: Snapshot Deletion", "Cloud API logging")
-                .replace("Snapshot: Snapshot Enumeration", "Cloud API logging")
-                .replace("Snapshot: Snapshot Modification", "Cloud API logging")
+                .replace("Snapshot: Snapshot Creation", "Cloud API logging; Cloud Audit logging")
+                .replace("Snapshot: Snapshot Deletion", "Cloud API logging; Cloud Audit logging")
+                .replace("Snapshot: Snapshot Enumeration", "Cloud API logging; Cloud Audit logging")
+                .replace("Snapshot: Snapshot Modification", "Cloud API logging; Cloud Audit logging")
                 .replace(
                     "User Account: User Account Authentication",
                     "Windows event logs; *nix /var/log/auth.log",
@@ -638,10 +638,10 @@ def mainsaw(
                     "Windows event logs; *nix /var/log/auth & access/authentication",
                 )
                 .replace("User Account: User Account Authentication", "")
-                .replace("Volume: Volume Creation", "Cloud API logging")
-                .replace("Volume: Volume Deletion", "Cloud API logging")
-                .replace("Volume: Volume Enumeration", "Cloud API logging")
-                .replace("Volume: Volume Modification", "Cloud API logging")
+                .replace("Volume: Volume Creation", "Cloud API logging; Cloud Audit logging")
+                .replace("Volume: Volume Deletion", "Cloud API logging; Cloud Audit logging")
+                .replace("Volume: Volume Enumeration", "Cloud API logging; Cloud Audit logging")
+                .replace("Volume: Volume Modification", "Cloud API logging; Cloud Audit logging")
                 .replace(
                     "Windows Registry: Windows Registry Key Access",
                     "Windows Registry monitoring",
