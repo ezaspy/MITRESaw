@@ -10,16 +10,16 @@ def chunker(seq, size):
 
 
 def build_matrix(
-    mitresaw_output_directory, mitresaw_mitre_files, consolidated_techniques
+    mitresaw_output_directory, mitresaw_mitre_files, consolidated_techniques, techniques_subtechniques_counts
 ):
     (
         threat_actors_xaxis,
         techniques_yaxis,
         threat_actor_techniques,
-        technique_subtechniques,
         markers,
         rows_techniques,
         query_pairings,
+        threat_actors_count,
     ) = ([] for _ in range(7))
     previous_technique_parent = ""
     previous_tactics = ""
@@ -30,11 +30,6 @@ def build_matrix(
             "group_software_id,group_software_name,group_software_description,group_software_link,group_software_searchterms,technique_id,technique_name,groupgroup_software,technique_description,technique_detection,technique_platforms,technique_datasources,evidence_type,evidence_indicators\n"
         )
     # compile intersect
-    (
-        threat_actors_count,
-        technique_subtechnique_counts,
-        techniques_subtechniques_counts,
-    ) = ([] for _ in range(3))
     for dataset in consolidated_techniques:
         threat_actors_xaxis.append(dataset.split("||")[1])
         techniques_yaxis.append(dataset.split("||")[3])
@@ -90,6 +85,7 @@ def build_matrix(
             parent_technique = uniq_technique
             sub_technique = "-"
         for threat_actor in uniq_threat_actors_xaxis:
+            # compiling techniques which have searchable identifiers
             if "{}||{}".format(threat_actor, parent_technique) in str(
                 uniq_threat_actor_techniques
             ) or "{}||{}".format(threat_actor, sub_technique) in str(
@@ -118,18 +114,11 @@ def build_matrix(
                     formatted_technique_row.append(element)
                 formatted_technique_row.append(int(row_technique[-1]))
                 rows_techniques.append(formatted_technique_row)
-                for element in row_technique[1:3]:
-                    technique_subtechnique_counts.append(element)
-                technique_subtechnique_counts.append(int(row_technique[-1]))
             else:
                 pass
         this_technique_parent.clear()
         technique_tactics.clear()
         markers.clear()
-    technique_subtechnique_counts = list(filter(None, technique_subtechnique_counts))
-    for technique_subtechnique_count in chunker(technique_subtechnique_counts, 3):
-        techniques_subtechniques_counts.append(technique_subtechnique_count)
-    techniques_subtechniques_counts = sorted(techniques_subtechniques_counts, key = lambda x: int(x[2]), reverse=True)
     # output intersect
     column_threat_actors_count = ["Threat Actor", "Count"]
     threat_actor_count_data_frame = pandas.DataFrame(
