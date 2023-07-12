@@ -5,6 +5,10 @@ import re
 from collections import Counter
 
 
+def chunker(seq, size):
+    return (seq[pos:pos + size] for pos in range(0, len(seq), size))
+
+
 def build_matrix(
     mitresaw_output_directory, mitresaw_mitre_files, consolidated_techniques
 ):
@@ -28,8 +32,9 @@ def build_matrix(
     # compile intersect
     (
         threat_actors_count,
-        technique_subtechniques_count,
-    ) = ([] for _ in range(2))
+        technique_subtechnique_counts,
+        techniques_subtechniques_counts,
+    ) = ([] for _ in range(3))
     for dataset in consolidated_techniques:
         threat_actors_xaxis.append(dataset.split("||")[1])
         techniques_yaxis.append(dataset.split("||")[3])
@@ -46,41 +51,10 @@ def build_matrix(
                 encoding="utf-8",
             ) as techniquecsv:
                 techniques_file_content = techniquecsv.readlines()
-    # collect potential sub-technique for counter
-    for uniq_technique in uniq_techniques_yaxis:
-        this_technique_parent = list(
-            filter(
-                None,
-                re.findall(
-                    r"(?:([^,]+): |,)$",
-                    str(techniques_file_content)
-                    .split("{},".format(uniq_technique))[0]
-                    .split("\\n', '")[-1],
-                ),
-            )
-        )
-        if len(this_technique_parent) > 0:
-            sub_technique = uniq_technique
-            if this_technique_parent[0] != previous_technique_parent:
-                parent_technique = this_technique_parent[0]
-                sub_technique = uniq_technique
-            else:
-                pass
-        else:
-            parent_technique = uniq_technique
-            sub_technique = "-"
-        technique_subtechniques.append("{}: {}".format(parent_technique, sub_technique))
-        this_technique_parent.clear()
     threat_actors = Counter(threat_actors_xaxis)
     threat_actors = sorted(threat_actors.items(), key=lambda x: x[1], reverse=True)
     for threat_actors_pair in threat_actors:
         threat_actors_count.append(list(threat_actors_pair))
-    technique_subtechniques = Counter(technique_subtechniques)
-    technique_subtechniques = sorted(
-        technique_subtechniques.items(), key=lambda x: x[1], reverse=True
-    )
-    for technique_subtechnique_pair in technique_subtechniques:
-        technique_subtechniques_count.append(list(technique_subtechnique_pair))
     # collect potential sub-technique and tactics
     for uniq_technique in uniq_techniques_yaxis:
         this_technique_parent = list(
@@ -144,19 +118,26 @@ def build_matrix(
                     formatted_technique_row.append(element)
                 formatted_technique_row.append(int(row_technique[-1]))
                 rows_techniques.append(formatted_technique_row)
+                for element in row_technique[1:3]:
+                    technique_subtechnique_counts.append(element)
+                technique_subtechnique_counts.append(int(row_technique[-1]))
             else:
                 pass
         this_technique_parent.clear()
         technique_tactics.clear()
         markers.clear()
+    technique_subtechnique_counts = list(filter(None, technique_subtechnique_counts))
+    for technique_subtechnique_count in chunker(technique_subtechnique_counts, 3):
+        techniques_subtechniques_counts.append(technique_subtechnique_count)
+    techniques_subtechniques_counts = sorted(techniques_subtechniques_counts, key = lambda x: int(x[2]), reverse=True)
     # output intersect
     column_threat_actors_count = ["Threat Actor", "Count"]
     threat_actor_count_data_frame = pandas.DataFrame(
         threat_actors_count, columns=column_threat_actors_count
     )
-    column_technique_subtechniques_count = ["Technique: Sub-technique", "Count"]
-    technique_subtechnique_count_data_frame = pandas.DataFrame(
-        technique_subtechniques_count, columns=column_technique_subtechniques_count
+    column_techniques_subtechniques_counts = ["Technique", "Sub-technique", "Count"]
+    techniques_subtechniques_count_data_frame = pandas.DataFrame(
+        techniques_subtechniques_counts, columns=column_techniques_subtechniques_counts
     )
     column_threat_actors = (
         ["tactics", "technique", "sub_technique"]
@@ -174,7 +155,7 @@ def build_matrix(
         threat_actor_count_data_frame.to_excel(
             intersect_writer, sheet_name="ThreatActorCount"
         )
-        technique_subtechnique_count_data_frame.to_excel(
+        techniques_subtechniques_count_data_frame.to_excel(
             intersect_writer, sheet_name="TechniqueCount"
         )
         intersect_data_frame.to_excel(intersect_writer, sheet_name="DetectableMatrix")
