@@ -321,6 +321,7 @@ def mainsaw(
             terms_insert
         )
     )
+    techniques = []
     for csvtechnique in os.listdir(mitre_files):
         if csvtechnique.endswith("-techniques-techniques.csv"):
             with open(
@@ -414,6 +415,7 @@ def mainsaw(
                                         valid_procedures.append(valid_procedure)
                                     else:
                                         pass
+                            techniques.append(technique_name)
                         else:
                             pass
                     else:
@@ -422,6 +424,18 @@ def mainsaw(
             pass
     print()
     consolidated_procedures = sorted(list(set(valid_procedures)))
+    counted_techniques = Counter(techniques)
+    technique_combos = []
+    for technique in counted_techniques.most_common():
+        technique_count = technique[1]
+        if ": " in technique[0]:
+            parent_technique = technique[0].split(": ")[0]
+            sub_technique = technique[0].split(": ")[1]
+        else:
+            parent_technique = technique[0]
+            sub_technique = "-"
+        technique_combo = [parent_technique, sub_technique, technique_count]
+        technique_combos.append(technique_combo)
     for each_procedure in consolidated_procedures:
         (
             technique_findings,
@@ -439,7 +453,7 @@ def mainsaw(
     consolidated_techniques = all_evidence[0]
     if len(consolidated_techniques) > 0:
         query_pairings = build_matrix(
-            mitresaw_output_directory, mitre_files, consolidated_techniques
+            mitresaw_output_directory, mitre_files, consolidated_techniques, technique_combos
         )
         for dataset in consolidated_techniques:
             with open(
