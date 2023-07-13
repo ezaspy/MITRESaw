@@ -10,11 +10,11 @@ from collections import Counter
 from datetime import datetime
 
 from MITRESaw.toolbox.extract import extract_indicators
-from MITRESaw.toolbox.files import collect_files
-from MITRESaw.toolbox.logs import tidy_log_sources
-from MITRESaw.toolbox.matrix import build_matrix
-from MITRESaw.toolbox.query import build_queries
-from MITRESaw.toolbox.saw import print_saw
+from MITRESaw.toolbox.output.matrix import build_matrix
+from MITRESaw.toolbox.output.query import build_queries
+from MITRESaw.toolbox.tools.files import collect_files
+from MITRESaw.toolbox.tools.logs import tidy_log_sources
+from MITRESaw.toolbox.tools.saw import print_saw
 
 
 def mainsaw(
