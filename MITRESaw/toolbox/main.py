@@ -46,13 +46,17 @@ def mainsaw(
             sheet, tab = sheet_tab.split("-")
             filename = os.path.join(
                 mitre_files,
-                "{}-attack-v{}-{}".format(attack_framework.lower(), attack_version, sheet),
+                "{}-attack-v{}-{}".format(
+                    attack_framework.lower(), attack_version, sheet
+                ),
             )
             spreadsheet = "{}.xlsx".format(filename)
             if not os.path.exists(
                 os.path.join(
                     mitre_files,
-                    "{}-attack-v{}/{}".format(attack_framework.lower(), attack_version, spreadsheet),
+                    "{}-attack-v{}/{}".format(
+                        attack_framework.lower(), attack_version, spreadsheet
+                    ),
                 )
             ):
                 mitre_spreadsheet = requests.get(
@@ -258,12 +262,11 @@ def mainsaw(
         pass
     (
         additional_terms,
-        group_softwares,
         evidence_found,
         valid_procedures,
         all_evidence,
         log_sources,
-    ) = ([] for _ in range(6))
+    ) = ([] for _ in range(5))
     (
         group_procedures,
         group_descriptions,
@@ -271,7 +274,6 @@ def mainsaw(
         contextual_information,
         previous_findings,
     ) = ({} for _ in range(5))
-    identifiers = ""
     if os.path.exists(
         os.path.join(mitresaw_output_directory, "ThreatActors_Techniques.csv")
     ):
@@ -305,7 +307,10 @@ def mainsaw(
         )
     else:
         terms_insert = ""
-    contextual_information = collect_files(
+    (
+        contextual_information,
+        group_procedures,
+    ) = collect_files(
         mitre_files,
         groups,
         group_procedures,
@@ -321,7 +326,9 @@ def mainsaw(
             terms_insert
         )
     )
-    techniques = []
+    groups_in_scope = []
+    techniques_in_scope = []
+    groups_techniques_in_scope = []
     for csvtechnique in os.listdir(mitre_files):
         if csvtechnique.endswith("-techniques-techniques.csv"):
             with open(
@@ -344,14 +351,15 @@ def mainsaw(
                         )[1].split("\"\\n', 'T")[0]
                         technique_name = associated_technique.split(",")[0]
                         technique_information = re.findall(
-                            r",(.*),https:\/\/attack\.mitre\.org\/techniques\/T[\d\.\/]+\|\|,[^,]+,[^,]+,\d+\.\d+,\"?(?:Initial\ Access|Execution|Persistence|Privilege\ Escalation|Defense\ Evasion|Credential\ Access|Dicovery|Lateral\ Movement|Collection|Command\ and\ Control|Exfiltration|Impact)(?:(, (?:Initial\ Access|Execution|Persistence|Privilege\ Escalation|Defense\ Evasion|Credential\ Access|Dicovery|Lateral\ Movement|Collection|Command\ and\ Control|Exfiltration|Impact))?){0,13},(\"?.*\"?),(\"?(?:Azure AD|Containers|Google Workspace|IaaS|Linux|Network|Office 365|PRE|SaaS|Windows|macOS)(?:(?:, (?:Azure AD|Containers|Google Workspace|IaaS|Linux|Network|Office 365|PRE|SaaS|Windows|macOS))?){0,10}\"?),(\"[^\"]+\"),",
+                            r",(.*),https:\/\/attack\.mitre\.org\/techniques\/T[\d\.\/]+\|\|,[^,]+,[^,]+,\d+\.\d+,\"?((?:Initial\ Access|Execution|Persistence|Privilege\ Escalation|Defense\ Evasion|Credential\ Access|Dicovery|Lateral\ Movement|Collection|Command\ and\ Control|Exfiltration|Impact)(?:(, (?:Initial\ Access|Execution|Persistence|Privilege\ Escalation|Defense\ Evasion|Credential\ Access|Dicovery|Lateral\ Movement|Collection|Command\ and\ Control|Exfiltration|Impact))?){0,13}),(\"?.*\"?),(\"?(?:Azure AD|Containers|Google Workspace|IaaS|Linux|Network|Office 365|PRE|SaaS|Windows|macOS)(?:(?:, (?:Azure AD|Containers|Google Workspace|IaaS|Linux|Network|Office 365|PRE|SaaS|Windows|macOS))?){0,10}\"?),(\"[^\"]+\"),",
                             associated_technique,
                         )
                         if len(technique_information) > 0:
                             technique_description = technique_information[0][0]
-                            technique_detection = technique_information[0][2]
-                            technique_platforms = technique_information[0][3]
-                            technique_data_sources = technique_information[0][4]
+                            technique_tactics = technique_information[0][1]
+                            technique_detection = technique_information[0][3]
+                            technique_platforms = technique_information[0][4]
+                            technique_data_sources = technique_information[0][5]
                             # obtaining navigation layers for all identified threat groups and software
                             if navigationlayers:
                                 navlayer_output_directory = os.path.join(
@@ -384,9 +392,7 @@ def mainsaw(
                                     )
                                     if not os.path.exists(navlayer_json):
                                         with open(navlayer_json, "wb") as navlayer_file:
-                                            navlayer_file.write(
-                                                group_navlayer.content
-                                            )
+                                            navlayer_file.write(group_navlayer.content)
                                     else:
                                         pass
                                 else:
@@ -415,16 +421,33 @@ def mainsaw(
                                         valid_procedures.append(valid_procedure)
                                     else:
                                         pass
-                            techniques.append(technique_name)
+                            techniques_in_scope.append(
+                                "T{}||{}".format(
+                                    context_id, technique_name, technique_tactics
+                                )
+                            )
+                            groups_techniques_in_scope.append(
+                                "{}||T{}||{}||{}".format(
+                                    group_name,
+                                    context_id,
+                                    technique_name,
+                                    technique_tactics,
+                                )
+                            )
                         else:
                             pass
                     else:
                         pass
+                    groups_in_scope.append(group_name)
         else:
             pass
     print()
     consolidated_procedures = sorted(list(set(valid_procedures)))
-    counted_techniques = Counter(techniques)
+    counted_techniques = Counter(techniques_in_scope)
+    sorted_techniques = sorted(
+        counted_techniques.items(), key=lambda x: x[1], reverse=True
+    )
+    sorted_threat_actors_techniques_in_scope = list(set(groups_techniques_in_scope))
     technique_combos = []
     for technique in counted_techniques.most_common():
         technique_count = technique[1]
@@ -439,21 +462,52 @@ def mainsaw(
     for each_procedure in consolidated_procedures:
         (
             technique_findings,
-            identifiers,
             previous_findings,
         ) = extract_indicators(
             each_procedure,
             terms,
             evidence_found,
-            identifiers,
+            "",
             previous_findings,
             truncate,
         )
+        threat_actor_technique_id_name_findings = []
+        # constructing sub-technique pairing due to format of sub-techniques in mitre output files e.g. T1566.001||Spearphshing Attachment
+        for technique_found in technique_findings:
+            threat_actor_found = technique_found.split("||")[1]
+            technique_id_found = technique_found.split("||")[2]
+            technique_name_found = technique_found.split("||")[3]
+            if "." in technique_id_found:
+                parent_technique_found = "{}||{}".format(
+                    technique_id_found,
+                    str(sorted_techniques)
+                    .split("{}||".format(technique_id_found))[1]
+                    .split("{}".format(technique_name_found))[0][0:-2],
+                )
+                technique_id_name_found = "{}: {}".format(
+                    parent_technique_found, technique_name_found
+                )
+            else:
+                technique_id_name_found = "{}||{}".format(
+                    technique_id_found, technique_name_found
+                )
+            threat_actor_technique_id_name_found = "{}||{}".format(
+                threat_actor_found, technique_id_name_found
+            )
+            threat_actor_technique_id_name_findings.append(
+                threat_actor_technique_id_name_found
+            )
+    threat_actor_technique_id_name_findings = list(
+        set(threat_actor_technique_id_name_findings)
+    )
     all_evidence.append(technique_findings)
     consolidated_techniques = all_evidence[0]
     if len(consolidated_techniques) > 0:
         query_pairings = build_matrix(
-            mitresaw_output_directory, mitre_files, consolidated_techniques, technique_combos
+            mitresaw_output_directory,
+            consolidated_techniques,
+            sorted_threat_actors_techniques_in_scope,
+            threat_actor_technique_id_name_findings,
         )
         for dataset in consolidated_techniques:
             with open(
@@ -475,7 +529,7 @@ def mainsaw(
                 else:
                     pass
             logsource = tidy_log_sources(dataset.split("||")[-3])
-            log_sources.append(logsource.replace(", , ",", "))
+            log_sources.append(logsource.replace(", , ", ", "))
         mitresaw_techniques = re.findall(
             r"\|\|(T\d{3}[\d\.]+)\|\|", str(consolidated_techniques)
         )

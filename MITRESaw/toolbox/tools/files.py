@@ -13,6 +13,44 @@ def collect_files(
     softwares,
     group_descriptions_software,
 ):
+    all_groups_procedures = {}
+    # cleaning up procedure_examples
+    os.rename(
+        os.path.join(
+            mitresaw_mitre_files,
+            "enterprise-attack-v13.1-techniques-procedure_examples.csv",
+        ),
+        os.path.join(
+            mitresaw_mitre_files,
+            ".enterprise-attack-v13.1-techniques-procedure_examples.csv",
+        ),
+    )
+    with open(
+        os.path.join(
+            mitresaw_mitre_files,
+            "enterprise-attack-v13.1-techniques-procedure_examples.csv",
+        ),
+        "a",
+    ) as procedure_examples_csv:
+        with open(
+            os.path.join(
+                mitresaw_mitre_files,
+                ".enterprise-attack-v13.1-techniques-procedure_examples.csv",
+            )
+        ) as hidden_examples_csv:
+            csvfilepath_content = re.sub(
+                r"\\\\n\\', \\'([C|G|S]\d+,)",
+                r"§§§§\1",
+                str(hidden_examples_csv.readlines())[2:-2],
+            )
+            for eachline in csvfilepath_content.split("§§§§"):
+                procedure_examples_csv.write("{}\n".format(eachline))
+    os.remove(
+        os.path.join(
+            mitresaw_mitre_files,
+            ".enterprise-attack-v13.1-techniques-procedure_examples.csv",
+        )
+    )
     # obtaining group procedure
     for groupsfile in os.listdir(mitresaw_mitre_files):
         if groupsfile.endswith("-groups-techniques_used.csv"):
@@ -27,36 +65,38 @@ def collect_files(
                         groups_procedure,
                     )
                     for group_procedure_csv_row in groups_procedure.split("\\n',<##>'"):
-                        if str(groups) == "['.']":
-                            row_elements = re.findall(
-                                r"^([^,]+),([^,]+),[^,]+,[^,]+,([^,]+),([^,]+),[^,]+,(.*)",
-                                group_procedure_csv_row.strip(),
-                            )
-                            if len(row_elements) > 0:
-                                if row_elements[0][0] != "source ID":
-                                    group_id = row_elements[0][0]
-                                    group_name = row_elements[0][1]
-                                    technique_id = row_elements[0][2]
-                                    technique_name = row_elements[0][3]
-                                    procedure_description = row_elements[0][4]
-                                    group_procedures[
-                                        "{}||{}||{}||{}||{}".format(
-                                            group_id,
-                                            group_name,
-                                            technique_id,
-                                            technique_name,
-                                            procedure_description,
-                                        )
-                                    ] = "-"
-                                else:
-                                    pass
+                        row_elements = re.findall(
+                            r"^([^,]+),([^,]+),[^,]+,[^,]+,([^,]+),([^,]+),[^,]+,(.*)",
+                            group_procedure_csv_row.strip(),
+                        )
+                        if len(row_elements) > 0:
+                            if row_elements[0][0] != "source ID":
+                                group_id = row_elements[0][0]
+                                group_name = row_elements[0][1]
+                                technique_id = row_elements[0][2]
+                                technique_name = row_elements[0][3]
+                                procedure_description = row_elements[0][4]
+                                all_groups_procedures[
+                                    "{}||{}||{}||{}||{}".format(
+                                        group_id,
+                                        group_name,
+                                        technique_id,
+                                        technique_name,
+                                        procedure_description,
+                                    )
+                                ] = "-"
                             else:
                                 pass
                         else:
+                            pass
+                        if str(groups) == "['.']":
+                            group_procedures = all_groups_procedures
+                        else:
                             for group in groups:
-                                if (
-                                    group in group_procedure_csv_row
-                                    and group_procedure_csv_row.startswith("G")
+                                if group.replace(
+                                    "_", " "
+                                ).lower() in group_procedure_csv_row.lower() and group_procedure_csv_row.startswith(
+                                    "G"
                                 ):
                                     row_elements = re.findall(
                                         r"^([^,]+),([^,]+),[^,]+,[^,]+,([^,]+),([^,]+),[^,]+,(.*)",
@@ -80,12 +120,22 @@ def collect_files(
                                             ] = "-"
                                         else:
                                             pass
+                                        all_groups_procedures[
+                                            "{}||{}||{}||{}||{}".format(
+                                                group_id,
+                                                group_name,
+                                                technique_id,
+                                                technique_name,
+                                                procedure_description,
+                                            )
+                                        ] = "-"
                                     else:
                                         pass
                                 else:
                                     pass
         else:
             pass
+    # need to review procedure examples for evidence of technique used by threat actor
     # obtaining group description
     for groupsfile in os.listdir(mitresaw_mitre_files):
         if groupsfile.endswith("-groups-groups.csv"):
@@ -124,7 +174,7 @@ def collect_files(
                                             "{}||{}||{}{}".format(
                                                 group_procedure,
                                                 group_description,
-                                                term,
+                                                ".",
                                                 additional_terms,
                                             )
                                         ] = "-"
@@ -250,5 +300,5 @@ def collect_files(
                 pass
     else:
         pass
-    contextual_information = group_descriptions  # | group_descriptions_software
-    return contextual_information
+    contextual_information = group_descriptions
+    return contextual_information, group_procedures

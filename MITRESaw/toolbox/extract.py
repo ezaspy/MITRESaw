@@ -86,6 +86,7 @@ def extract_indicators(
                 list(filter(lambda port: "10" != port, port_identifiers)),
             )
         )  # remove string from list
+        port_identifiers = list(set(port_identifiers))
         return port_identifiers
 
     def extract_evt_indicators(description):
@@ -109,6 +110,7 @@ def extract_indicators(
         evt_identifiers = re.findall(
             r"(?:(?:Event ?|E)I[Dd]( ==)? ?\"?(\d{1,5}))", description
         )
+        evt_identifiers = list(set(evt_identifiers))
         return evt_identifiers
 
     def extract_reg_indicators(
@@ -133,7 +135,8 @@ def extract_indicators(
         )
         reg_identifiers = re.findall(
             r"([Hh][Kk](?:[Ll][Mm]|[Cc][Uu]|[Ee][Yy])[^\{\}\|\"'!$<>`]+)",
-            description.lower().replace("hkey_local_machine", "hklm")
+            description.lower()
+            .replace("hkey_local_machine", "hklm")
             .replace("hkey_current_user", "hkcu")
             .replace("[hklm]", "hklm")
             .replace("[hkcu]", "hkcu")
@@ -141,16 +144,33 @@ def extract_indicators(
             .replace("hkcu]", "hkcu")
             .replace("“", '"')
             .replace("”", '"')
-            .replace("\\\\\\\\", "\\")
+            .replace("\\\\\\\\\\\\\\\\", "\\\\\\\\")
             .replace("\\\\\\\\\\\\\\\\", "\\")
-            .strip("\\").strip(),
+            .replace("\\\\\\\\\\\\", "\\")
+            .replace("\\\\\\\\", "\\")
+            .replace("£\\\\t£", "\\\\t")
+            .replace('""', '"')
+            .replace("  ", " ")
+            .replace("[.]", ".")
+            .replace("[:]", ":")
+            .replace("&#42;", "*")
+            .replace("&lbrace;", "{")
+            .replace("&rbrace;", "}")
+            .replace("&lt;", "<")
+            .replace("&gt;", ">")
+            .replace("[username]", "%username%")
+            .replace("\\]\\", "]\\")
+            .replace('""', '"')
+            .replace('""', '"')
+            .strip("\\")
+            .strip(),
         )
         registry_identifiers = list(set(reg_identifiers))
         return registry_identifiers
 
     def extract_cmd_indicators(description):
         terms_identifiers = re.findall(
-            r"(?:(?:<code> ?([^\{\}!$<>`]{3,}) ?<\/code>)|(?:` ?([^\{\}!$<>`]{3,}) ?`)|(?:\[ ?([^\{\}!$<>`]{3,}) ?\]\(https:\/\/attack\.mitre\.org\/software))",
+            r"(?:(?:<code> ?([^\{\}!<>`]{3,}) ?<\/code>)|(?:` ?([^\{\}!<>`]{3,}) ?`)|(?:\[ ?([^\{\}!<>`]{3,}) ?\]\(https:\/\/attack\.mitre\.org\/software))",
             description,
         )
         cmd_identifiers = []
@@ -172,12 +192,14 @@ def extract_indicators(
                     and not each_identifier.lower().startswith("[hkey")
                     and not each_identifier == ", and "
                 ):
-                    cmd_identifiers.append(
+                    identifier = (
                         each_identifier.lower()
+                        .replace("“", '"')
+                        .replace("”", '"')
                         .replace("\\\\\\\\\\\\\\\\", "\\\\\\\\")
-                        .replace("\\\\\\\\\\\\", "\\\\\\")
-                        .replace("\\\\\\\\\\", "\\\\")
-                        .replace("\\\\\\\\", "\\\\")
+                        .replace("\\\\\\\\\\\\\\\\", "\\")
+                        .replace("\\\\\\\\\\\\", "\\")
+                        .replace("\\\\\\\\", "\\")
                         .replace("£\\\\t£", "\\\\t")
                         .replace('""', '"')
                         .replace("  ", " ")
@@ -186,21 +208,30 @@ def extract_indicators(
                         .replace("&#42;", "*")
                         .replace("&lbrace;", "{")
                         .replace("&rbrace;", "}")
+                        .replace("&lt;", "<")
+                        .replace("&gt;", ">")
                         .replace("[username]", "%username%")
                         .replace("\\]\\", "]\\")
                         .replace('""', '"')
-                        .replace("“", '"')
-                        .replace("”", '"')
                         .replace('""', '"')
-                        .strip("\\").strip()
+                        .strip("\\")
+                        .strip()
                     )
+                    if len(identifier) > 1:
+                        cmd_identifiers.append(identifier)
+                    else:
+                        pass
                 else:
                     pass
+        cmd_identifiers = list(set(cmd_identifiers))
         return cmd_identifiers
 
-    """if "||S" in valid_procedure:
-        print(valid_procedure)
-        time.sleep(20)"""
+    """def extract_cve_indicators(description):
+        pass"""
+
+    """def extract_software_indicators(description):
+        pass"""
+
     software_group_name = valid_procedure.split("||")[1]
     technique_id = valid_procedure.split("||")[2]
     technique_name = valid_procedure.split("||")[3]
@@ -373,4 +404,12 @@ def extract_indicators(
             pass
     else:
         evidence_type = ""
-    return evidence_found, identifiers, previous_findings
+    """if "CVE" in description.upper():
+        cve_identifiers = extract_cve_indicators(description)
+    else:
+        cve_identifiers = []"""
+    """if "/software/" in description.lower():
+        software_identifiers = extract_software_indicators(description)
+    else:
+        software_identifiers = []"""
+    return evidence_found, previous_findings

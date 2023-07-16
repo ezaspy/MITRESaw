@@ -5,12 +5,43 @@ import re
 from collections import Counter
 
 
-def chunker(seq, size):
-    return (seq[pos:pos + size] for pos in range(0, len(seq), size))
+def find_parent_sub_technique(technique, sorted_threat_actors_techniques_in_scope):
+    if (
+        "||{}||".format(technique)
+        in str(sorted_threat_actors_techniques_in_scope)[2:-2]
+    ):
+        parent_technique = technique
+        sub_technique = "-"
+    elif (
+        "||{}: ".format(technique)
+        in str(sorted_threat_actors_techniques_in_scope)[2:-2]
+    ):
+        parent_technique = technique
+        sub_technique = (
+            str(sorted_threat_actors_techniques_in_scope)[2:-2]
+            .split("{}: ".format(technique))[1]
+            .split("', '")[0]
+        )
+    elif (
+        ": {}||".format(technique)
+        in str(sorted_threat_actors_techniques_in_scope)[2:-2]
+    ):
+        parent_technique = (
+            str(sorted_threat_actors_techniques_in_scope)[2:-2]
+            .split(": {}".format(technique))[0]
+            .split("||")[-1]
+        )
+        sub_technique = technique
+    else:
+        pass
+    return parent_technique, sub_technique
 
 
 def build_matrix(
-    mitresaw_output_directory, mitresaw_mitre_files, consolidated_techniques, techniques_subtechniques_counts
+    mitresaw_output_directory,
+    consolidated_techniques,
+    sorted_threat_actors_techniques_in_scope,
+    threat_actor_technique_id_name_findings,
 ):
     (
         threat_actors_xaxis,
@@ -20,9 +51,10 @@ def build_matrix(
         rows_techniques,
         query_pairings,
         threat_actors_count,
-    ) = ([] for _ in range(7))
-    previous_technique_parent = ""
-    previous_tactics = ""
+        techniques_count,
+        parent_sub_techniques_yaxis,
+        parent_sub_counts,
+    ) = ([] for _ in range(10))
     with open(
         os.path.join(mitresaw_output_directory, "ThreatActors_Techniques.csv"), "w"
     ) as opmitre_csv:
@@ -36,105 +68,122 @@ def build_matrix(
         threat_actor_techniques.append(
             "{}||{}".format(dataset.split("||")[1], dataset.split("||")[3])
         )
-    uniq_threat_actors_xaxis = sorted(list(set(threat_actors_xaxis)))
-    uniq_techniques_yaxis = sorted(list(set(techniques_yaxis)))
-    uniq_threat_actor_techniques = sorted(list(set(threat_actor_techniques)))
-    for csvtechnique in os.listdir(mitresaw_mitre_files):
-        if csvtechnique.endswith("-techniques-techniques.csv"):
-            with open(
-                "{}".format(os.path.join(mitresaw_mitre_files, csvtechnique)),
-                encoding="utf-8",
-            ) as techniquecsv:
-                techniques_file_content = techniquecsv.readlines()
     threat_actors = Counter(threat_actors_xaxis)
     threat_actors = sorted(threat_actors.items(), key=lambda x: x[1], reverse=True)
     for threat_actors_pair in threat_actors:
         threat_actors_count.append(list(threat_actors_pair))
+    uniq_threat_actors_xaxis = sorted(list(set(threat_actors_xaxis)))
+    uniq_techniques_yaxis = sorted(list(set(techniques_yaxis)))
+    uniq_threat_actor_techniques = sorted(list(set(threat_actor_techniques)))
+    for each_technique in techniques_yaxis:
+        parent_technique, sub_technique = find_parent_sub_technique(
+            each_technique, sorted_threat_actors_techniques_in_scope
+        )
+        parent_sub_techniques_yaxis.append(
+            "{}||{}".format(parent_technique, sub_technique)
+        )
+    techniques_count = Counter(parent_sub_techniques_yaxis)
+    techniques_count = sorted(
+        techniques_count.items(), key=lambda x: x[1], reverse=True
+    )
     # collect potential sub-technique and tactics
     for uniq_technique in uniq_techniques_yaxis:
-        this_technique_parent = list(
-            filter(
-                None,
-                re.findall(
-                    r"(?:([^,]+): |,)$",
-                    str(techniques_file_content)
-                    .split("{},".format(uniq_technique))[0]
-                    .split("\\n', '")[-1],
-                ),
-            )
+        parent_technique, sub_technique = find_parent_sub_technique(
+            uniq_technique, sorted_threat_actors_techniques_in_scope
         )
-        technique_tactics = re.findall(
-            r",.*?,https:\/\/attack\.mitre\.org\/techniques\/T[\d\.\/]+,[^,]+,[^,]+,\d+\.\d+,\"?((?:Initial\ Access|Execution|Persistence|Privilege\ Escalation|Defense\ Evasion|Credential\ Access|Dicovery|Lateral\ Movement|Collection|Command\ and\ Control|Exfiltration|Impact)(?:(?:, (?:Initial\ Access|Execution|Persistence|Privilege\ Escalation|Defense\ Evasion|Credential\ Access|Dicovery|Lateral\ Movement|Collection|Command\ and\ Control|Exfiltration|Impact))?){0,13})",
-            str(techniques_file_content)
-            .split("{},".format(uniq_technique))[1]
-            .split("\\n', '")[0],
+        technique_tactics = (
+            str(sorted_threat_actors_techniques_in_scope)
+            .split("{}||".format(uniq_technique))[1]
+            .split("', '")[0]
         )
-        if len(this_technique_parent) > 0 and len(technique_tactics) > 0:
-            sub_technique = uniq_technique
-            if (this_technique_parent[0] != previous_technique_parent) and (
-                technique_tactics[0] != previous_tactics
-            ):
-                if technique_tactics[0] != "":
-                    parent_technique = this_technique_parent[0]
-                    sub_technique = uniq_technique
-                else:
-                    pass
-            else:
-                pass
-        else:
-            parent_technique = uniq_technique
-            sub_technique = "-"
+        # need to identify criteria for what is detectable, non-detectable and out-of-scope
         for threat_actor in uniq_threat_actors_xaxis:
-            # compiling techniques which have searchable identifiers
-            if "{}||{}".format(threat_actor, parent_technique) in str(
-                uniq_threat_actor_techniques
-            ) or "{}||{}".format(threat_actor, sub_technique) in str(
-                uniq_threat_actor_techniques
+            threat_actor_technique_regex = (
+                re.escape(threat_actor)
+                + r"\|\|T[\d\.]+\|\|(?:[\w :]{0,25})"
+                + re.escape(uniq_technique)
+            )
+            detectable_threat_actor_technique = re.search(
+                threat_actor_technique_regex,
+                str(threat_actor_technique_id_name_findings),
+            )
+            if (
+                detectable_threat_actor_technique != None
+            ) and (  # results from 'detectable' techniques
+                "{}||{}".format(threat_actor, parent_technique)
+                in str(uniq_threat_actor_techniques)
+                or "{}||{}".format(threat_actor, sub_technique)
+                in str(uniq_threat_actor_techniques)
             ):
-                markers.append("x")
+                marker = "X"  # detectable
+            elif (
+                (
+                    detectable_threat_actor_technique == None
+                )  # no results from 'detectable' techniques
+                and (
+                    "{}||{}".format(threat_actor, parent_technique)
+                    not in str(uniq_threat_actor_techniques)
+                    and "{}||{}".format(threat_actor, sub_technique)
+                    not in str(uniq_threat_actor_techniques)
+                )
+                and (
+                    "{}||".format(threat_actor) in str(uniq_threat_actor_techniques)
+                )  # and out-of-scope
+            ):
+                marker = "-"  # out-of-scope
             else:
-                markers.append("N/A")
-            if (len(technique_tactics) > 0) and (
-                len(markers) == len(uniq_threat_actors_xaxis)
-            ):
+                marker = "O"  # undetectable
+            markers.append(marker)
+            if len(markers) == len(uniq_threat_actors_xaxis):
                 formatted_technique_row = []
                 row_technique = [
-                    technique_tactics[0].replace(",", ";"),
+                    technique_tactics.replace(",", ";"),
                     parent_technique,
                     sub_technique,
                     str(markers)[2:-2],
-                    str(markers)[2:-2].count("x"),
+                    "{}".format(str(markers)[2:-2].count("X")),
+                    "{}".format(str(markers)[2:-2].count("O")),
+                    str(len(markers)),
                 ]
-                row_technique = re.sub(
-                    r"(£, )(\d+)\]$",
-                    r"\1£\2£",
-                    str(row_technique).replace("'", "£").replace('"', "£"),
-                )[2:-1].split("£, £")
-                for element in row_technique[0:-1]:
+                # readjusting the count from int->str->int
+                row_technique = str(row_technique).replace('"', "'")[2:-2].split("', '")
+                for element in row_technique[0:-3]:
                     formatted_technique_row.append(element)
+                formatted_technique_row.append(int(row_technique[-3]))
+                formatted_technique_row.append(int(row_technique[-2]))
                 formatted_technique_row.append(int(row_technique[-1]))
                 rows_techniques.append(formatted_technique_row)
             else:
                 pass
-        this_technique_parent.clear()
-        technique_tactics.clear()
         markers.clear()
     # output intersect
+    for technique_count in techniques_count:
+        parent_sub_count = [
+            str(technique_count)[2:-1].split("||")[0],
+            str(technique_count)[2:-1].split("||")[1].split("', ")[0],
+            int(str(technique_count)[2:-1].split("||")[1].split("', ")[1]),
+        ]
+        parent_sub_counts.append(list(parent_sub_count))
     column_threat_actors_count = ["Threat Actor", "Count"]
     threat_actor_count_data_frame = pandas.DataFrame(
         threat_actors_count, columns=column_threat_actors_count
     )
-    column_techniques_subtechniques_counts = ["Technique", "Sub-technique", "Count"]
+    column_techniques_count = ["Technique", "Sub-technique", "Count"]
     techniques_subtechniques_count_data_frame = pandas.DataFrame(
-        techniques_subtechniques_counts, columns=column_techniques_subtechniques_counts
+        parent_sub_counts, columns=column_techniques_count
     )
-    column_threat_actors = (
-        ["tactics", "technique", "sub_technique"]
+    column_threat_actors = (  # sort count columns by Total, Identifable, Uidentifiable
+        ["Tactic", "Parent Technique", "Sub-technique"]
         + uniq_threat_actors_xaxis
-        + ["Technique Total"]
+        + ["Identifiable"]
+        + ["Unidentifiable"]
+        + ["Total"]
     )
     intersect_data_frame = pandas.DataFrame(
         rows_techniques, columns=column_threat_actors
+    )
+    sorted_intersect_data_frame = intersect_data_frame.sort_values(
+        ["Identifiable", "Unidentifiable", "Parent Technique", "Sub-technique"], ascending=[False, False, True, True]
     )
     with pandas.ExcelWriter(
         os.path.join(
@@ -147,5 +196,7 @@ def build_matrix(
         techniques_subtechniques_count_data_frame.to_excel(
             intersect_writer, sheet_name="TechniqueCount"
         )
-        intersect_data_frame.to_excel(intersect_writer, sheet_name="DetectableMatrix")
+        sorted_intersect_data_frame.to_excel(
+            intersect_writer, sheet_name="DetectableMatrix"
+        )
     return query_pairings
