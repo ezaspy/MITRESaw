@@ -35,7 +35,7 @@ parser.add_argument(
 parser.add_argument(
     "-n",
     "--navlayers",
-    help="Obtain ATT&CK Navigator layers for Groups and Software identified during extraction of identifable evidence\n",
+    help="Obtain ATT&CK Navigator layers for Groups identified during extraction of identifable evidence\n",
     action="store_const",
     const=True,
     default=False,
@@ -44,14 +44,6 @@ parser.add_argument(
     "-q",
     "--queries",
     help="Build search queries based on results - to be imported into Splunk; Azure Sentinel; Elastic/Kibana\n",
-    action="store_const",
-    const=True,
-    default=False,
-)
-parser.add_argument(
-    "-s",
-    "--software",
-    help="Collecting software used by identified Threat Actors (this can take some time as there are 740 different pieces of Software)\n",
     action="store_const",
     const=True,
     default=False,
@@ -74,7 +66,6 @@ provided_groups = args.threatgroups
 art = args.asciiart
 navigationlayers = args.navlayers
 queries = args.queries
-softwares = args.software
 truncate = args.truncate
 
 attack_framework = attackframework[0].title()
@@ -84,8 +75,6 @@ sheet_tabs = [
     "techniques-procedure examples",
     "groups-groups",
     "groups-techniques used",
-    "groups-associated software",
-    "software-techniques used",
 ]
 port_indicators = []
 evts_indicators = []
@@ -102,7 +91,6 @@ def main():
         art,
         navigationlayers,
         queries,
-        softwares,
         truncate,
         attack_framework,
         attack_version,
