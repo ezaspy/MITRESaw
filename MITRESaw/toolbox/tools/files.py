@@ -39,10 +39,16 @@ def collect_files(
             csvfilepath_content = re.sub(
                 r"\\?\\n(?:\"|\\'), (?:\"|\\')((?:C|G|S)\d{4},)",
                 r"§§§§\1",
-                str(hidden_examples_csv.readlines())[2:-5]
+                str(hidden_examples_csv.readlines())[2:-5],
             )
             for eachline in csvfilepath_content.split("§§§§"):
-                procedure_examples_csv.write("{}\n".format(eachline.replace("\\\\n\\', \\'","").replace("\\\\£\\\\t£","\\t").replace("£\\\\t£","")))
+                procedure_examples_csv.write(
+                    "{}\n".format(
+                        eachline.replace("\\\\n\\', \\'", "")
+                        .replace("\\\\£\\\\t£", "\\t")
+                        .replace("£\\\\t£", "")
+                    )
+                )
     os.remove(
         os.path.join(
             mitresaw_mitre_files,

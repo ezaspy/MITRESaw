@@ -1,9 +1,9 @@
 #!/usr/bin/env python3 -tt
 
+
 def tidy_log_sources(dataset):
     logsource = (
-        dataset
-        .replace(
+        dataset.replace(
             "Active Directory: Active Directory Credential Request",
             "Command-line logging; Windows event logs",
         )
@@ -25,25 +25,45 @@ def tidy_log_sources(dataset):
         )
         .replace(
             "Application Log: Application Log Content",
-            "Application Log Content",
-        )
-        .replace("Cloud Service: Cloud Service Disable", "Cloud API logging; Cloud Audit logging")
-        .replace(
-            "Cloud Service: Cloud Service Enumeration", "Cloud API logging; Cloud Audit logging"
+            "Application-specific logging",
         )
         .replace(
-            "Cloud Service: Cloud Service Modification", "Cloud API logging; Cloud Audit logging"
-        )
-        .replace("Cloud Storage: Cloud Storage Access", "Cloud API logging; Cloud Audit logging")
-        .replace("Cloud Storage: Cloud Storage Creation", "Cloud API logging; Cloud Audit logging")
-        .replace("Cloud Storage: Cloud Storage Deletion", "Cloud API logging; Cloud Audit logging")
-        .replace(
-            "Cloud Storage: Cloud Storage Enumeration", "Cloud API logging; Cloud Audit logging"
+            "Cloud Service: Cloud Service Disable",
+            "Cloud API logging; Cloud Audit logging",
         )
         .replace(
-            "Cloud Storage: Cloud Storage Modification", "Cloud API logging; Cloud Audit logging"
+            "Cloud Service: Cloud Service Enumeration",
+            "Cloud API logging; Cloud Audit logging",
+        )
+        .replace(
+            "Cloud Service: Cloud Service Modification",
+            "Cloud API logging; Cloud Audit logging",
+        )
+        .replace(
+            "Cloud Storage: Cloud Storage Access",
+            "Cloud API logging; Cloud Audit logging",
+        )
+        .replace(
+            "Cloud Storage: Cloud Storage Creation",
+            "Cloud API logging; Cloud Audit logging",
+        )
+        .replace(
+            "Cloud Storage: Cloud Storage Deletion",
+            "Cloud API logging; Cloud Audit logging",
+        )
+        .replace(
+            "Cloud Storage: Cloud Storage Enumeration",
+            "Cloud API logging; Cloud Audit logging",
+        )
+        .replace(
+            "Cloud Storage: Cloud Storage Modification",
+            "Cloud API logging; Cloud Audit logging",
         )
         .replace("Drive: Drive Access", "Windows event logs; setupapi.dev.log")
+        .replace(
+            "Drive: Drive Creation",
+            "Windows event logs; setupapi.dev.log; Hardware-layer monitoring",
+        )
         .replace("Drive: Drive Modification", "Windows event logs; setupapi.dev.log")
         .replace("Driver: Driver Load", "Sysmon")
         .replace("Command: Command Execution", "Command-line logging")
@@ -80,6 +100,7 @@ def tidy_log_sources(dataset):
             "Firewall: Firewall Rule Modification",
             "Command-line logging; Windows event logs",
         )
+        .replace("Firmware: Firmware Modification", "Hardware-layer monitoring")
         .replace(
             "Group: Group Enumeration",
             "Command-line logging; Windows event logs",
@@ -92,10 +113,18 @@ def tidy_log_sources(dataset):
         .replace("Image: Image Deletion", "Cloud API logging; Cloud Audit logging")
         .replace("Image: Image Metadata", "Cloud API logging; Cloud Audit logging")
         .replace("Image: Image Modification", "Cloud API logging; Cloud Audit logging")
-        .replace("Instance: Instance Creation", "Cloud API logging; Cloud Audit logging")
-        .replace("Instance: Instance Deletion", "Cloud API logging; Cloud Audit logging")
-        .replace("Instance: Instance Enumeration", "Cloud API logging; Cloud Audit logging")
-        .replace("Instance: Instance Modification", "Cloud API logging; Cloud Audit logging")
+        .replace(
+            "Instance: Instance Creation", "Cloud API logging; Cloud Audit logging"
+        )
+        .replace(
+            "Instance: Instance Deletion", "Cloud API logging; Cloud Audit logging"
+        )
+        .replace(
+            "Instance: Instance Enumeration", "Cloud API logging; Cloud Audit logging"
+        )
+        .replace(
+            "Instance: Instance Modification", "Cloud API logging; Cloud Audit logging"
+        )
         .replace("Instance: Instance Start", "Cloud API logging; Cloud Audit logging")
         .replace("Instance: Instance Stop", "Cloud API logging; Cloud Audit logging")
         .replace("Kernel: Kernel Module Load", "/lib/module logging")
@@ -108,9 +137,7 @@ def tidy_log_sources(dataset):
             "",
         )
         .replace("Module: Module Load", "Command-line logging; Sysmon")
-        .replace(
-            "Named Pipe: Named Pipe Metadata", "Command-line logging; Sysmon"
-        )
+        .replace("Named Pipe: Named Pipe Metadata", "Command-line logging; Sysmon")
         .replace(
             "Network Share: Network Share Access",
             "Command-line logging; Windows event logs",
@@ -152,21 +179,25 @@ def tidy_log_sources(dataset):
             "Script: Script Execution",
             "PowerShell Script Block logging; Command-line logging; Windows event logs; Microsoft-Windows-WMI-Activity/Trace & WMITracing.log",
         )
-        .replace("Sensor Health: Host Status", "Host Availability logging")
-        .replace(
-            "Service: Service Creation", "Windows event logs; *nix /var/log"
-        )
+        .replace("Sensor Health: Host Status", "Host-availability monitoring")
+        .replace("Service: Service Creation", "Windows event logs; *nix /var/log")
         .replace(
             "Service: Service Metadata",
             "Command-line logging; Windows event logs; *nix /var/log",
         )
+        .replace("Service: Service Modification", "Windows event logs; *nix /var/log")
         .replace(
-            "Service: Service Modification", "Windows event logs; *nix /var/log"
+            "Snapshot: Snapshot Creation", "Cloud API logging; Cloud Audit logging"
         )
-        .replace("Snapshot: Snapshot Creation", "Cloud API logging; Cloud Audit logging")
-        .replace("Snapshot: Snapshot Deletion", "Cloud API logging; Cloud Audit logging")
-        .replace("Snapshot: Snapshot Enumeration", "Cloud API logging; Cloud Audit logging")
-        .replace("Snapshot: Snapshot Modification", "Cloud API logging; Cloud Audit logging")
+        .replace(
+            "Snapshot: Snapshot Deletion", "Cloud API logging; Cloud Audit logging"
+        )
+        .replace(
+            "Snapshot: Snapshot Enumeration", "Cloud API logging; Cloud Audit logging"
+        )
+        .replace(
+            "Snapshot: Snapshot Modification", "Cloud API logging; Cloud Audit logging"
+        )
         .replace(
             "User Account: User Account Authentication",
             "Windows event logs; *nix /var/log/auth.log",
@@ -191,7 +222,9 @@ def tidy_log_sources(dataset):
         .replace("Volume: Volume Creation", "Cloud API logging; Cloud Audit logging")
         .replace("Volume: Volume Deletion", "Cloud API logging; Cloud Audit logging")
         .replace("Volume: Volume Enumeration", "Cloud API logging; Cloud Audit logging")
-        .replace("Volume: Volume Modification", "Cloud API logging; Cloud Audit logging")
+        .replace(
+            "Volume: Volume Modification", "Cloud API logging; Cloud Audit logging"
+        )
         .replace(
             "Windows Registry: Windows Registry Key Access",
             "Windows Registry monitoring",

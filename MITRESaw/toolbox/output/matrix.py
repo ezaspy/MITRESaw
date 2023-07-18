@@ -165,7 +165,14 @@ def build_matrix(
         rows_techniques, columns=column_threat_actors
     )
     sorted_intersect_data_frame = intersect_data_frame.sort_values(
-        ["Total", "Identifiable", "Unidentifiable", "Parent Technique", "Sub-technique"], ascending=[False, False, False, True, True]
+        [
+            "Total",
+            "Identifiable",
+            "Unidentifiable",
+            "Parent Technique",
+            "Sub-technique",
+        ],
+        ascending=[False, False, False, True, True],
     )
     with pandas.ExcelWriter(
         os.path.join(

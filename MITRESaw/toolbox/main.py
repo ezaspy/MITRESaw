@@ -34,7 +34,9 @@ def mainsaw(
         os.makedirs(mitresaw_root_date)
     else:
         pass
-    mitre_files = os.path.join(mitresaw_root_date, "{}-{}".format(attack_framework.lower(), attack_version))
+    mitre_files = os.path.join(
+        mitresaw_root_date, "{}-{}".format(attack_framework.lower(), attack_version)
+    )
     if not os.path.exists(mitre_files):
         os.makedirs(mitre_files)
         time.sleep(0.1)
@@ -48,7 +50,11 @@ def mainsaw(
             if not os.path.exists(os.path.join(mitre_files, spreadsheet)):
                 mitre_spreadsheet = requests.get(
                     "https://attack.mitre.org/docs/{}-attack-v{}/{}-attack-v{}-{}".format(
-                        attack_framework.lower(), attack_version, attack_framework.lower(), attack_version, spreadsheet.split("/")[-1]
+                        attack_framework.lower(),
+                        attack_version,
+                        attack_framework.lower(),
+                        attack_version,
+                        spreadsheet.split("/")[-1],
                     )
                 )
                 with open(spreadsheet, "wb") as spreadsheet_file:
@@ -545,8 +551,11 @@ def mainsaw(
             .split(", ")
         )
         counted_log_sources = Counter(log_sources)
-        log_coverage = sorted(
-            counted_log_sources.items(), key=lambda x: x[1], reverse=True
+        log_coverage = list(
+            filter(
+                None,
+                sorted(counted_log_sources.items(), key=lambda x: x[1], reverse=True),
+            )
         )
         print(
             "\n\n     The following log sources are required to \033[4;37mdetect\033[1;m the aforementioned ATT&CK techniques:"

@@ -232,7 +232,19 @@ def extract_indicators(
     """def extract_software_indicators(description):
         pass"""
 
-    def add_to_evidence(valid_procedure, previous_findings, evidence_found, technique_id, technique_name, software_group_name, evidence_type, identifiers, software_group_terms, terms, truncate):
+    def add_to_evidence(
+        valid_procedure,
+        previous_findings,
+        evidence_found,
+        technique_id,
+        technique_name,
+        software_group_name,
+        evidence_type,
+        identifiers,
+        software_group_terms,
+        terms,
+        truncate,
+    ):
         evidence = "{}||{}||{}".format(
             valid_procedure,
             evidence_type,
@@ -276,7 +288,19 @@ def extract_indicators(
     # extracting ports
     port_identifiers = extract_port_indicators(description)
     if len(port_identifiers) > 0:
-        evidence_found = add_to_evidence(valid_procedure, previous_findings, evidence_found, technique_id, technique_name, software_group_name, "ports", port_identifiers, software_group_terms, terms, truncate)
+        evidence_found = add_to_evidence(
+            valid_procedure,
+            previous_findings,
+            evidence_found,
+            technique_id,
+            technique_name,
+            software_group_name,
+            "ports",
+            port_identifiers,
+            software_group_terms,
+            terms,
+            truncate,
+        )
     else:
         port_identifiers = []
     # extracting event IDs
@@ -285,7 +309,19 @@ def extract_indicators(
     else:
         evt_identifiers = []
     if len(evt_identifiers) > 0:
-        evidence_found = add_to_evidence(valid_procedure, previous_findings, evidence_found, technique_id, technique_name, software_group_name, "evt", evt_identifiers, software_group_terms, terms, truncate)
+        evidence_found = add_to_evidence(
+            valid_procedure,
+            previous_findings,
+            evidence_found,
+            technique_id,
+            technique_name,
+            software_group_name,
+            "evt",
+            evt_identifiers,
+            software_group_terms,
+            terms,
+            truncate,
+        )
     else:
         evt_identifiers = []
     # extracting registry artefacts
@@ -303,13 +339,37 @@ def extract_indicators(
     else:
         reg_identifiers = []
     if len(reg_identifiers) > 0:
-        evidence_found = add_to_evidence(valid_procedure, previous_findings, evidence_found, technique_id, technique_name, software_group_name, "reg", reg_identifiers, software_group_terms, terms, truncate)
+        evidence_found = add_to_evidence(
+            valid_procedure,
+            previous_findings,
+            evidence_found,
+            technique_id,
+            technique_name,
+            software_group_name,
+            "reg",
+            reg_identifiers,
+            software_group_terms,
+            terms,
+            truncate,
+        )
     else:
         reg_identifiers = []
     # extracting commands
     if "<code>" in description or "`" in description:
         cmd_identifiers = extract_cmd_indicators(description)
-        evidence_found = add_to_evidence(valid_procedure, previous_findings, evidence_found, technique_id, technique_name, software_group_name, "cmd", cmd_identifiers, software_group_terms, terms, truncate)
+        evidence_found = add_to_evidence(
+            valid_procedure,
+            previous_findings,
+            evidence_found,
+            technique_id,
+            technique_name,
+            software_group_name,
+            "cmd",
+            cmd_identifiers,
+            software_group_terms,
+            terms,
+            truncate,
+        )
     else:
         cmd_identifiers = []
     """if "CVE" in description.upper():
@@ -320,8 +380,25 @@ def extract_indicators(
         software_identifiers = extract_software_indicators(description)
     else:
         software_identifiers = []"""
-    if len(port_identifiers) == 0 and len(evt_identifiers) == 0 and len(reg_identifiers) == 0 and len(cmd_identifiers) == 0:
-        evidence_found = add_to_evidence(valid_procedure, previous_findings, evidence_found, technique_id, technique_name, software_group_name, "N/A", [], software_group_terms, terms, truncate)
+    if (
+        len(port_identifiers) == 0
+        and len(evt_identifiers) == 0
+        and len(reg_identifiers) == 0
+        and len(cmd_identifiers) == 0
+    ):
+        evidence_found = add_to_evidence(
+            valid_procedure,
+            previous_findings,
+            evidence_found,
+            technique_id,
+            technique_name,
+            software_group_name,
+            "N/A",
+            [],
+            software_group_terms,
+            terms,
+            truncate,
+        )
     else:
         pass
     return evidence_found, previous_findings
