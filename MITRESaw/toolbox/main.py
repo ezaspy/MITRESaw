@@ -344,7 +344,7 @@ def mainsaw(
                             technique_detection = technique_information[0][2]
                             technique_platforms = technique_information[0][3]
                             technique_data_sources = technique_information[0][4]
-                            # obtaining navigation layers for all identified threat groups and software
+                            # obtaining navigation layers for all identified threat groups
                             if navigationlayers:
                                 navlayer_output_directory = os.path.join(
                                     mitresaw_root_date,
