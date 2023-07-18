@@ -73,6 +73,10 @@ def tidy_log_sources(dataset):
         )
         .replace("Firewall: Firewall Enumeration", "Command-line logging")
         .replace(
+            "Firewall: Firewall Metadata",
+            "",
+        )
+        .replace(
             "Firewall: Firewall Rule Modification",
             "Command-line logging; Windows event logs",
         )
@@ -98,6 +102,10 @@ def tidy_log_sources(dataset):
         .replace(
             "Logon Session: Logon Session Creation",
             "Windows event logs; *nix /var/log",
+        )
+        .replace(
+            "Logon Session: Logon Session Metadata",
+            "",
         )
         .replace("Module: Module Load", "Command-line logging; Sysmon")
         .replace(

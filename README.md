@@ -83,7 +83,7 @@ MITRESaw has evolved to also produce search queries based on extracted indicator
 
 To display usage, simply run: `python3 MITRESaw.py -h`
 ```
-usage: MITRESaw.py [-h] [-a] [-n] [-q] [-s] [-t] framework platforms searchterms threatgroups
+usage: MITRESaw.py [-h] [-a] [-n] [-q] [-t] framework platforms searchterms threatgroups
 
 positional arguments:
   framework             Specify which framework to collect from - Enterprise, ICS or Mobile
@@ -100,7 +100,6 @@ optional arguments:
   -a, --asciiart        Don't show ASCII Art of the saw.
   -n, --navlayers       Obtain ATT&CK Navigator layers for Groups and Software identified during extraction of identifable evidence
   -q, --queries         Build search queries based on results - to be imported into Splunk; Azure Sentinel; Elastic/Kibana
-  -s, --software        Collect software used by identified Threat Actors
   -t, --truncate        Truncate printing of indicators for a cleaner output (they are still written to output file)
 ```
 

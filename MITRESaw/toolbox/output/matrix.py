@@ -100,39 +100,21 @@ def build_matrix(
         for threat_actor in uniq_threat_actors_xaxis:
             threat_actor_technique_regex = (
                 re.escape(threat_actor)
-                + r"\|\|T[\d\.]+\|\|(?:[\w :]{0,25})"
+                + r"\|\|T[\d\.]+\|\|"
                 + re.escape(uniq_technique)
+                + r"(?:\|\|[^\|]+){7}\|\|(ports|evt|reg|cmd|N/A)\|\|"
             )
-            detectable_threat_actor_technique = re.search(
+            undetectable_threat_actor_technique = re.search(
                 threat_actor_technique_regex,
-                str(threat_actor_technique_id_name_findings),
+                str(consolidated_techniques),
             )
-            if (
-                detectable_threat_actor_technique != None
-            ) and (  # results from 'detectable' techniques
-                "{}||{}".format(threat_actor, parent_technique)
-                in str(uniq_threat_actor_techniques)
-                or "{}||{}".format(threat_actor, sub_technique)
-                in str(uniq_threat_actor_techniques)
-            ):
-                marker = "X"  # detectable
-            elif (
-                (
-                    detectable_threat_actor_technique == None
-                )  # no results from 'detectable' techniques
-                and (
-                    "{}||{}".format(threat_actor, parent_technique)
-                    not in str(uniq_threat_actor_techniques)
-                    and "{}||{}".format(threat_actor, sub_technique)
-                    not in str(uniq_threat_actor_techniques)
-                )
-                and (
-                    "{}||".format(threat_actor) in str(uniq_threat_actor_techniques)
-                )  # and out-of-scope
-            ):
-                marker = "-"  # out-of-scope
+            if undetectable_threat_actor_technique != None:
+                if undetectable_threat_actor_technique[0].split("||")[-2] == "N/A":
+                    marker = "O"
+                else:
+                    marker = "X"
             else:
-                marker = "O"  # undetectable
+                marker = "-"
             markers.append(marker)
             if len(markers) == len(uniq_threat_actors_xaxis):
                 formatted_technique_row = []
@@ -183,7 +165,7 @@ def build_matrix(
         rows_techniques, columns=column_threat_actors
     )
     sorted_intersect_data_frame = intersect_data_frame.sort_values(
-        ["Identifiable", "Unidentifiable", "Parent Technique", "Sub-technique"], ascending=[False, False, True, True]
+        ["Total", "Identifiable", "Unidentifiable", "Parent Technique", "Sub-technique"], ascending=[False, False, False, True, True]
     )
     with pandas.ExcelWriter(
         os.path.join(

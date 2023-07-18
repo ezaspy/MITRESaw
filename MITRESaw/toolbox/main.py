@@ -24,7 +24,6 @@ def mainsaw(
     art,
     navigationlayers,
     queries,
-    softwares,
     truncate,
     attack_framework,
     attack_version,
@@ -35,7 +34,7 @@ def mainsaw(
         os.makedirs(mitresaw_root_date)
     else:
         pass
-    mitre_files = os.path.join(mitresaw_root_date, "mitre-attack-files")
+    mitre_files = os.path.join(mitresaw_root_date, "{}-{}".format(attack_framework.lower(), attack_version))
     if not os.path.exists(mitre_files):
         os.makedirs(mitre_files)
         time.sleep(0.1)
@@ -44,24 +43,12 @@ def mainsaw(
         # obtaining framework
         for sheet_tab in sheet_tabs:
             sheet, tab = sheet_tab.split("-")
-            filename = os.path.join(
-                mitre_files,
-                "{}-attack-v{}-{}".format(
-                    attack_framework.lower(), attack_version, sheet
-                ),
-            )
+            filename = os.path.join(mitre_files, sheet)
             spreadsheet = "{}.xlsx".format(filename)
-            if not os.path.exists(
-                os.path.join(
-                    mitre_files,
-                    "{}-attack-v{}/{}".format(
-                        attack_framework.lower(), attack_version, spreadsheet
-                    ),
-                )
-            ):
+            if not os.path.exists(os.path.join(mitre_files, spreadsheet)):
                 mitre_spreadsheet = requests.get(
-                    "https://attack.mitre.org/docs/enterprise-attack-v{}/{}".format(
-                        attack_version, spreadsheet.split("/")[-1]
+                    "https://attack.mitre.org/docs/{}-attack-v{}/{}-attack-v{}-{}".format(
+                        attack_framework.lower(), attack_version, attack_framework.lower(), attack_version, spreadsheet.split("/")[-1]
                     )
                 )
                 with open(spreadsheet, "wb") as spreadsheet_file:
@@ -74,7 +61,7 @@ def mainsaw(
             with open(temp_csv) as csv_with_new_lines:
                 malformed_csv = str(csv_with_new_lines.readlines())[2:-2]
                 malformed_csv = re.sub(r"\\t", r"£\\t£", malformed_csv)
-                if "-groups" not in filename and "-software" not in filename:
+                if "-groups" not in filename:
                     malformed_csv = re.sub(r"\\n', '(T\d{4})", r"\n\1", malformed_csv)
                     malformed_csv = re.sub(
                         r"\\n['\"], ['\"]\\n['\"], ['\"]", r".  ", malformed_csv
@@ -179,8 +166,8 @@ def mainsaw(
 """,
     ]
     chosen_title = random.choice(titles)
-    tagline = "{}        *ATT&CK for Enterprise v{}\n".format(
-        chosen_title, attack_version
+    tagline = "{}        *ATT&CK for {} v{}\n".format(
+        chosen_title, attack_framework.title(), attack_version
     )
     time.sleep(2)
     subprocess.Popen(["clear"]).communicate()
@@ -266,14 +253,16 @@ def mainsaw(
         valid_procedures,
         all_evidence,
         log_sources,
-    ) = ([] for _ in range(5))
+        groups_in_scope,
+        techniques_in_scope,
+        groups_techniques_in_scope,
+    ) = ([] for _ in range(8))
     (
         group_procedures,
         group_descriptions,
-        group_descriptions_software,
         contextual_information,
         previous_findings,
-    ) = ({} for _ in range(5))
+    ) = ({} for _ in range(4))
     if os.path.exists(
         os.path.join(mitresaw_output_directory, "ThreatActors_Techniques.csv")
     ):
@@ -317,8 +306,6 @@ def mainsaw(
         group_descriptions,
         terms,
         additional_terms,
-        softwares,
-        group_descriptions_software,
     )
     print()
     print(
@@ -326,11 +313,8 @@ def mainsaw(
             terms_insert
         )
     )
-    groups_in_scope = []
-    techniques_in_scope = []
-    groups_techniques_in_scope = []
     for csvtechnique in os.listdir(mitre_files):
-        if csvtechnique.endswith("-techniques-techniques.csv"):
+        if csvtechnique.endswith("techniques-techniques.csv"):
             with open(
                 "{}".format(os.path.join(mitre_files, csvtechnique)),
                 encoding="utf-8",
@@ -343,7 +327,7 @@ def mainsaw(
                     if "T{},".format(context_id) in str(techniques_file_content):
                         replaced_row_technique = re.sub(
                             r"(,https://attack.mitre.org/techniques/T\d{4}(?:\/\d{3})?)(,)",
-                            r"\1||\2",
+                            r"\1±§§±\2",
                             str(techniques_file_content),
                         )
                         associated_technique = replaced_row_technique.split(
@@ -351,15 +335,15 @@ def mainsaw(
                         )[1].split("\"\\n', 'T")[0]
                         technique_name = associated_technique.split(",")[0]
                         technique_information = re.findall(
-                            r",(.*),https:\/\/attack\.mitre\.org\/techniques\/T[\d\.\/]+\|\|,[^,]+,[^,]+,\d+\.\d+,\"?((?:Initial\ Access|Execution|Persistence|Privilege\ Escalation|Defense\ Evasion|Credential\ Access|Dicovery|Lateral\ Movement|Collection|Command\ and\ Control|Exfiltration|Impact)(?:(, (?:Initial\ Access|Execution|Persistence|Privilege\ Escalation|Defense\ Evasion|Credential\ Access|Dicovery|Lateral\ Movement|Collection|Command\ and\ Control|Exfiltration|Impact))?){0,13}),(\"?.*\"?),(\"?(?:Azure AD|Containers|Google Workspace|IaaS|Linux|Network|Office 365|PRE|SaaS|Windows|macOS)(?:(?:, (?:Azure AD|Containers|Google Workspace|IaaS|Linux|Network|Office 365|PRE|SaaS|Windows|macOS))?){0,10}\"?),(\"[^\"]+\"),",
+                            r",(.*),https:\/\/attack\.mitre\.org\/techniques\/T[\d\.\/]+±§§±,[^,]+,[^,]+,\d+\.\d+,\"?((?:Reconnaissance|Resource Development|Initial Access|Execution|Persistence|Privilege Escalation|Defense Evasion|Credential Access|Discovery|Lateral Movement|Collection|Command and Control|Exfiltration|Impact)(?:, (?:Reconnaissance|Resource Development|Initial Access|Execution|Persistence|Privilege Escalation|Defense Evasion|Credential Access|Discovery|Lateral Movement|Collection|Command and Control|Exfiltration|Impact)){0,6})\"?,(\"?.*\"?),(\"?(?:Azure AD|Containers|Google Workspace|IaaS|Linux|Network|Office 365|PRE|SaaS|Windows|macOS)(?:(?:, (?:Azure AD|Containers|Google Workspace|IaaS|Linux|Network|Office 365|PRE|SaaS|Windows|macOS))?){0,10}\"?),(\"[^\"]+\"),",
                             associated_technique,
                         )
                         if len(technique_information) > 0:
                             technique_description = technique_information[0][0]
                             technique_tactics = technique_information[0][1]
-                            technique_detection = technique_information[0][3]
-                            technique_platforms = technique_information[0][4]
-                            technique_data_sources = technique_information[0][5]
+                            technique_detection = technique_information[0][2]
+                            technique_platforms = technique_information[0][3]
+                            technique_data_sources = technique_information[0][4]
                             # obtaining navigation layers for all identified threat groups and software
                             if navigationlayers:
                                 navlayer_output_directory = os.path.join(
@@ -378,7 +362,7 @@ def mainsaw(
                                     if not os.path.exists(navlayer_output_directory):
                                         os.makedirs(navlayer_output_directory)
                                         print(
-                                            "     -> Obtaining ATT&CK Navigator Layers for \033[1;33mThreat Actors/Software\033[1;m related to identified \033[1;32mTechniques\033[1;m...".format(
+                                            "     -> Obtaining ATT&CK Navigator Layers for \033[1;33mThreat Actors\033[1;m related to identified \033[1;32mTechniques\033[1;m...".format(
                                                 group_name
                                             )
                                         )
@@ -472,7 +456,7 @@ def mainsaw(
             truncate,
         )
         threat_actor_technique_id_name_findings = []
-        # constructing sub-technique pairing due to format of sub-techniques in mitre output files e.g. T1566.001||Spearphshing Attachment
+        # constructing sub-technique pairing due to format of sub-techniques in mitre output files e.g. T1566.001||Spearphishing Attachment
         for technique_found in technique_findings:
             threat_actor_found = technique_found.split("||")[1]
             technique_id_found = technique_found.split("||")[2]
@@ -540,7 +524,7 @@ def mainsaw(
                 '", "comment": "", "score": 1, "color": "#66b1ff", "showSubtechniques": false}}, {{"techniqueID": "',
             )
             # enterprise-attack navigation layer only currently
-            mitresaw_navlayer = '{{"description": "Enterprise techniques used by various Threat Actors/Software, produced by MITRESaw", "name": "{}", "domain": "enterprise-attack", "versions": {{"layer": "4.4", "attack": "13", "navigator": "4.8.1"}}, "techniques": [{{"techniqueID": "{}", "comment": "", "score": 1, "color": "#66b1ff", "showSubtechniques": false}}], "gradient": {{"colors": ["#ffffff", "#66b1ff"], "minValue": 0, "maxValue": 1}}, "legendItems": [{{"label": "identified from MITRESaw analysis", "color": "#66b1ff"}}]}}\n'.format(
+            mitresaw_navlayer = '{{"description": "Enterprise techniques used by various Threat Actors, produced by MITRESaw", "name": "{}", "domain": "enterprise-attack", "versions": {{"layer": "4.4", "attack": "13", "navigator": "4.8.1"}}, "techniques": [{{"techniqueID": "{}", "comment": "", "score": 1, "color": "#66b1ff", "showSubtechniques": false}}], "gradient": {{"colors": ["#ffffff", "#66b1ff"], "minValue": 0, "maxValue": 1}}, "legendItems": [{{"label": "identified from MITRESaw analysis", "color": "#66b1ff"}}]}}\n'.format(
                 mitresaw_output_directory.split("/")[2][11:], mitresaw_techniques_insert
             )
             with open(

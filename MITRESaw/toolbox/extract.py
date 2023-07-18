@@ -184,9 +184,9 @@ def extract_indicators(
                     and "citation" not in each_identifier.lower()
                     and not each_identifier.startswith(")")
                     and not each_identifier.endswith("(")
-                    and not each_identifier.lower().startswith("hklm")
-                    and not each_identifier.lower().startswith("hkcu")
-                    and not each_identifier.lower().startswith("hkey")
+                    and not each_identifier.lower().startswith("hklm\\")
+                    and not each_identifier.lower().startswith("hkcu\\")
+                    and not each_identifier.lower().startswith("hkey\\")
                     and not each_identifier.lower().startswith("[hklm")
                     and not each_identifier.lower().startswith("[hkcu")
                     and not each_identifier.lower().startswith("[hkey")
@@ -232,6 +232,37 @@ def extract_indicators(
     """def extract_software_indicators(description):
         pass"""
 
+    def add_to_evidence(valid_procedure, previous_findings, evidence_found, technique_id, technique_name, software_group_name, evidence_type, identifiers, software_group_terms, terms, truncate):
+        evidence = "{}||{}||{}".format(
+            valid_procedure,
+            evidence_type,
+            str(identifiers),
+        )
+        evidence_found.append(evidence)
+        if "{}||{}||{}||{}".format(
+            technique_id, technique_name, software_group_name, evidence_type
+        ) not in str(previous_findings):
+            if len(identifiers) > 0:
+                identifiers = finding_to_stdout(
+                    technique_name,
+                    software_group_name,
+                    evidence_type,
+                    identifiers,
+                    software_group_terms,
+                    terms,
+                    truncate,
+                )
+                previous_findings[
+                    "{}||{}||{}||{}".format(
+                        technique_id, technique_name, software_group_name, evidence_type
+                    )
+                ] = "-"
+            else:
+                pass
+        else:
+            pass
+        return evidence_found
+
     software_group_name = valid_procedure.split("||")[1]
     technique_id = valid_procedure.split("||")[2]
     technique_name = valid_procedure.split("||")[3]
@@ -245,78 +276,18 @@ def extract_indicators(
     # extracting ports
     port_identifiers = extract_port_indicators(description)
     if len(port_identifiers) > 0:
-        evidence_type = "ports"
-        evidence = "{}||{}||{}".format(
-            valid_procedure,
-            evidence_type,
-            str(port_identifiers),
-        )
-        if "{}||{}||{}||{}".format(
-            technique_id, technique_name, software_group_name, evidence_type
-        ) not in str(previous_findings):
-            identifiers = finding_to_stdout(
-                technique_name,
-                software_group_name,
-                evidence_type,
-                port_identifiers,
-                software_group_terms,
-                terms,
-                truncate,
-            )
-            previous_findings[
-                "{}||{}||{}||{}".format(
-                    technique_id, technique_name, software_group_name, evidence_type
-                )
-            ] = "-"
-            evidence = "{}||{}||{}".format(
-                valid_procedure,
-                evidence_type,
-                identifiers,
-            )
-            evidence_found.append(evidence)
-        else:
-            pass
+        evidence_found = add_to_evidence(valid_procedure, previous_findings, evidence_found, technique_id, technique_name, software_group_name, "ports", port_identifiers, software_group_terms, terms, truncate)
     else:
-        evidence_type = ""
+        port_identifiers = []
     # extracting event IDs
     if "Event ID" in description or "EID" in description or "EventId" in description:
         evt_identifiers = extract_evt_indicators(description)
     else:
         evt_identifiers = []
     if len(evt_identifiers) > 0:
-        evidence_type = "evt"
-        evidence = "{}||{}||{}".format(
-            valid_procedure,
-            evidence_type,
-            str(evt_identifiers),
-        )
-        if "{}||{}||{}||{}".format(
-            technique_id, technique_name, software_group_name, evidence_type
-        ) not in str(previous_findings):
-            identifiers = finding_to_stdout(
-                technique_name,
-                software_group_name,
-                evidence_type,
-                evt_identifiers,
-                software_group_terms,
-                terms,
-                truncate,
-            )
-            previous_findings[
-                "{}||{}||{}||{}".format(
-                    technique_id, technique_name, software_group_name, evidence_type
-                )
-            ] = "-"
-            evidence = "{}||{}||{}".format(
-                valid_procedure,
-                evidence_type,
-                identifiers,
-            )
-            evidence_found.append(evidence)
-        else:
-            pass
+        evidence_found = add_to_evidence(valid_procedure, previous_findings, evidence_found, technique_id, technique_name, software_group_name, "evt", evt_identifiers, software_group_terms, terms, truncate)
     else:
-        evidence_type = ""
+        evt_identifiers = []
     # extracting registry artefacts
     if (
         "hklm\\" in description.lower()
@@ -332,78 +303,15 @@ def extract_indicators(
     else:
         reg_identifiers = []
     if len(reg_identifiers) > 0:
-        evidence_type = "reg"
-        evidence = "{}||{}||{}".format(
-            valid_procedure,
-            evidence_type,
-            str(reg_identifiers),
-        )
-        if "{}||{}||{}||{}".format(
-            technique_id, technique_name, software_group_name, evidence_type
-        ) not in str(previous_findings):
-            identifiers = finding_to_stdout(
-                technique_name,
-                software_group_name,
-                evidence_type,
-                reg_identifiers,
-                software_group_terms,
-                terms,
-                truncate,
-            )
-            previous_findings[
-                "{}||{}||{}||{}".format(
-                    technique_id, technique_name, software_group_name, evidence_type
-                )
-            ] = "-"
-            evidence = "{}||{}||{}".format(
-                valid_procedure,
-                evidence_type,
-                identifiers,
-            )
-            evidence_found.append(evidence)
-        else:
-            pass
+        evidence_found = add_to_evidence(valid_procedure, previous_findings, evidence_found, technique_id, technique_name, software_group_name, "reg", reg_identifiers, software_group_terms, terms, truncate)
     else:
-        evidence_type = ""
+        reg_identifiers = []
     # extracting commands
     if "<code>" in description or "`" in description:
         cmd_identifiers = extract_cmd_indicators(description)
+        evidence_found = add_to_evidence(valid_procedure, previous_findings, evidence_found, technique_id, technique_name, software_group_name, "cmd", cmd_identifiers, software_group_terms, terms, truncate)
     else:
         cmd_identifiers = []
-    if len(cmd_identifiers) > 0:
-        evidence_type = "cmd"
-        evidence = "{}||{}||{}".format(
-            valid_procedure,
-            evidence_type,
-            str(cmd_identifiers),
-        )
-        if "{}||{}||{}||{}".format(
-            technique_id, technique_name, software_group_name, evidence_type
-        ) not in str(previous_findings):
-            identifiers = finding_to_stdout(
-                technique_name,
-                software_group_name,
-                evidence_type,
-                cmd_identifiers,
-                software_group_terms,
-                terms,
-                truncate,
-            )
-            previous_findings[
-                "{}||{}||{}||{}".format(
-                    technique_id, technique_name, software_group_name, evidence_type
-                )
-            ] = "-"
-            evidence = "{}||{}||{}".format(
-                valid_procedure,
-                evidence_type,
-                identifiers,
-            )
-            evidence_found.append(evidence)
-        else:
-            pass
-    else:
-        evidence_type = ""
     """if "CVE" in description.upper():
         cve_identifiers = extract_cve_indicators(description)
     else:
@@ -412,4 +320,8 @@ def extract_indicators(
         software_identifiers = extract_software_indicators(description)
     else:
         software_identifiers = []"""
+    if len(port_identifiers) == 0 and len(evt_identifiers) == 0 and len(reg_identifiers) == 0 and len(cmd_identifiers) == 0:
+        evidence_found = add_to_evidence(valid_procedure, previous_findings, evidence_found, technique_id, technique_name, software_group_name, "N/A", [], software_group_terms, terms, truncate)
+    else:
+        pass
     return evidence_found, previous_findings
