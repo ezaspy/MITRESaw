@@ -128,13 +128,16 @@ def build_matrix(
                     str(len(markers)),
                 ]
                 # readjusting the count from int->str->int
-                row_technique = str(row_technique).replace('"', "'")[2:-2].split("', '")
-                for element in row_technique[0:-3]:
-                    formatted_technique_row.append(element)
-                formatted_technique_row.append(int(row_technique[-3]))
-                formatted_technique_row.append(int(row_technique[-2]))
-                formatted_technique_row.append(int(row_technique[-1]))
-                rows_techniques.append(formatted_technique_row)
+                if str(row_technique[-2]) != "0" and str(row_technique[-3]) != "0":
+                    row_technique = str(row_technique).replace('"', "'")[2:-2].split("', '")
+                    for element in row_technique[0:-3]:
+                        formatted_technique_row.append(element)
+                    formatted_technique_row.append(int(row_technique[-3]))
+                    formatted_technique_row.append(int(row_technique[-2]))
+                    formatted_technique_row.append(int(row_technique[-1]))
+                    rows_techniques.append(formatted_technique_row)
+                else:
+                    pass
             else:
                 pass
         markers.clear()
