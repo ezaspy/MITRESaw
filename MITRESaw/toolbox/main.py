@@ -237,8 +237,10 @@ def mainsaw(
             terms_filename_insert = "{}".format(str(terms)[2:-2].replace("', '", "-"))
         if str(groups) == "['.']":
             groups_filename_insert = ""
+            groups_insert = "Threat Actors"
         else:
             groups_filename_insert = "{}".format(str(groups)[2:-2].replace("', '", "-"))
+            groups_insert = "{}".format(str(groups)[2:-2])
         mitresaw_output_directory = os.path.join(
             mitresaw_root_date,
             "{}_{}_{}".format(
@@ -315,8 +317,8 @@ def mainsaw(
     )
     print()
     print(
-        "    -> Extracting \033[1;31mIdentifiers\033[1;m from \033[1;32mTechniques\033[1;m based on \033[1;33mThreat Actors\033[1;m{}".format(
-            terms_insert
+        "    -> Extracting \033[1;31mIdentifiers\033[1;m from \033[1;32mTechniques\033[1;m based on \033[1;33m{}\033[1;m{}".format(
+            groups_insert.replace("', '", "\033[1;m, \033[1;33m"), terms_insert
         )
     )
     for csvtechnique in os.listdir(mitre_files):
@@ -499,6 +501,13 @@ def mainsaw(
             sorted_threat_actors_techniques_in_scope,
             threat_actor_technique_id_name_findings,
         )
+        """if queries:
+            print()
+            print(
+                "    -> Compiling queries based on \033[1;31midentifiers\033[1;m based on {}".format(
+                    terms_insert
+                )
+            )"""
         for dataset in consolidated_techniques:
             with open(
                 os.path.join(mitresaw_output_directory, "ThreatActors_Techniques.csv"),
@@ -524,23 +533,20 @@ def mainsaw(
             r"\|\|(T\d{3}[\d\.]+)\|\|", str(consolidated_techniques)
         )
         mitresaw_techniques = list(set(mitresaw_techniques))
-        if navigationlayers:
-            mitresaw_techniques_insert = str(mitresaw_techniques)[2:-2].replace(
-                "', '",
-                '", "comment": "", "score": 1, "color": "#66b1ff", "showSubtechniques": false}}, {{"techniqueID": "',
+        mitresaw_techniques_insert = str(mitresaw_techniques)[2:-2].replace(
+            "', '",
+            '", "comment": "", "score": 1, "color": "#66b1ff", "showSubtechniques": false}}, {{"techniqueID": "',
+        )
+        # enterprise-attack navigation layer only currently
+        mitresaw_navlayer = '{{"description": "Enterprise techniques used by various Threat Actors, produced by MITRESaw", "name": "{}", "domain": "enterprise-attack", "versions": {{"layer": "4.4", "attack": "13", "navigator": "4.8.1"}}, "techniques": [{{"techniqueID": "{}", "comment": "", "score": 1, "color": "#66b1ff", "showSubtechniques": false}}], "gradient": {{"colors": ["#ffffff", "#66b1ff"], "minValue": 0, "maxValue": 1}}, "legendItems": [{{"label": "identified from MITRESaw analysis", "color": "#66b1ff"}}]}}\n'.format(
+            mitresaw_output_directory.split("/")[2][11:], mitresaw_techniques_insert
+        )
+        with open(
+            os.path.join(mitresaw_output_directory, "enterprise-layer.json"), "w"
+        ) as mitresaw_navlayer_json:
+            mitresaw_navlayer_json.write(
+                mitresaw_navlayer.replace("{{", "{").replace("}}", "}")
             )
-            # enterprise-attack navigation layer only currently
-            mitresaw_navlayer = '{{"description": "Enterprise techniques used by various Threat Actors, produced by MITRESaw", "name": "{}", "domain": "enterprise-attack", "versions": {{"layer": "4.4", "attack": "13", "navigator": "4.8.1"}}, "techniques": [{{"techniqueID": "{}", "comment": "", "score": 1, "color": "#66b1ff", "showSubtechniques": false}}], "gradient": {{"colors": ["#ffffff", "#66b1ff"], "minValue": 0, "maxValue": 1}}, "legendItems": [{{"label": "identified from MITRESaw analysis", "color": "#66b1ff"}}]}}\n'.format(
-                mitresaw_output_directory.split("/")[2][11:], mitresaw_techniques_insert
-            )
-            with open(
-                os.path.join(mitresaw_output_directory, "enterprise-layer.json"), "w"
-            ) as mitresaw_navlayer_json:
-                mitresaw_navlayer_json.write(
-                    mitresaw_navlayer.replace("{{", "{").replace("}}", "}")
-                )
-        else:
-            pass
         build_queries(queries, mitresaw_output_directory, query_pairings)
         log_sources = sorted(
             str(log_sources)[3:-3]
@@ -550,7 +556,9 @@ def mainsaw(
             .replace("; ", ", ")
             .split(", ")
         )
-        counted_log_sources = Counter(log_sources)
+        counted_log_sources = Counter(list(filter(None, log_sources)))
+        """print(counted_log_sources)
+        time.sleep(60)"""
         log_coverage = list(
             filter(
                 None,

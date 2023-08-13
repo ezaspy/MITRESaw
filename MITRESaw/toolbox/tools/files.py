@@ -1,6 +1,7 @@
 #!/usr/bin/env python3 -tt
 import os
 import re
+import sys
 
 
 def collect_files(
@@ -220,4 +221,12 @@ def collect_files(
                             pass
         else:
             pass
+    if len(group_descriptions) == 0:
+        print()
+        print(
+            "\n    No \033[1;33mgroups\033[1;m could be found with the keywords provided. Perhaps try again with less restrictive \033[1;36msearch terms\033[1;m.\n\n\n"
+        )
+        sys.exit()
+    else:
+        pass
     return group_descriptions, group_procedures
