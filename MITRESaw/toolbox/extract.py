@@ -32,7 +32,8 @@ def extract_indicators(
             extracted_terms = re.findall(r"\w+", str(software_group_terms))
             software_group_terms_insert = sorted(list(set(extracted_terms)))
             terms_insert = " -> '\033[1;36m{}\033[1;m' ->".format(
-                str(software_group_terms_insert)[2:-2]
+                str(software_group_terms_insert)
+                .replace()[2:-2]
                 .replace("_", " ")
                 .replace("', '", "\033[1;m', '\033[1;36m")
             )
@@ -217,12 +218,9 @@ def extract_indicators(
                         .strip("\\")
                         .strip()
                     )
+                    # identifier = re.sub("\\\\('[^'\]\\]+)\\\\(')", "\1\2", identifier)
                     if len(identifier) > 1:
                         cmd_identifiers.append(identifier)
-                    else:
-                        pass
-                else:
-                    pass
         cmd_identifiers = list(set(cmd_identifiers))
         return cmd_identifiers
 
@@ -269,10 +267,6 @@ def extract_indicators(
                         technique_id, technique_name, software_group_name, evidence_type
                     )
                 ] = "-"
-            else:
-                pass
-        else:
-            pass
         return evidence_found
 
     software_group_name = valid_procedure.split("||")[1]
@@ -399,6 +393,4 @@ def extract_indicators(
             terms,
             truncate,
         )
-    else:
-        pass
     return evidence_found, previous_findings

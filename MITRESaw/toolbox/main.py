@@ -21,6 +21,7 @@ def mainsaw(
     operating_platforms,
     search_terms,
     provided_groups,
+    show_others,
     art,
     navigationlayers,
     queries,
@@ -32,8 +33,6 @@ def mainsaw(
     mitresaw_root_date = os.path.join(".", str(datetime.now())[0:10])
     if not os.path.exists(mitresaw_root_date):
         os.makedirs(mitresaw_root_date)
-    else:
-        pass
     mitre_files = os.path.join(
         mitresaw_root_date, "{}-{}".format(attack_framework.lower(), attack_version)
     )
@@ -59,8 +58,6 @@ def mainsaw(
                 )
                 with open(spreadsheet, "wb") as spreadsheet_file:
                     spreadsheet_file.write(mitre_spreadsheet.content)
-            else:
-                pass
             temp_csv = "{}temp.csv".format(filename)
             xlsx_file = pandas.read_excel(spreadsheet, tab, engine="openpyxl")
             xlsx_file.to_csv(temp_csv, index=None, header=True)
@@ -100,8 +97,6 @@ def mainsaw(
             ) as final_csv:
                 final_csv.write(formated_csv)
             os.remove(temp_csv)
-    else:
-        pass
     time.sleep(0.1)
     saw = """
 @                                                         ,
@@ -202,22 +197,14 @@ def mainsaw(
             print_saw(saw, tagline, "                                ")
             print_saw(saw, tagline, "                              ")
             print_saw(saw, tagline, "                            ")
-        else:
-            pass
-    else:
-        pass
     platforms = str(operating_platforms)[2:-2].split(",")
     platforms = list(filter(None, platforms))
     if not art:
         print_saw(saw, tagline, "                          ")
-    else:
-        pass
     terms = str(search_terms)[2:-2].split(",")
     terms = list(filter(None, terms))
     if not art:
         print_saw(saw, tagline, "                        ")
-    else:
-        pass
     groups = str(provided_groups)[2:-2].split(",")
     groups = list(filter(None, groups))
     if not art:
@@ -251,10 +238,6 @@ def mainsaw(
         )
         if not os.path.exists(os.path.join(mitresaw_output_directory)):
             os.makedirs(os.path.join(mitresaw_output_directory))
-        else:
-            pass
-    else:
-        pass
     (
         additional_terms,
         evidence_found,
@@ -277,8 +260,6 @@ def mainsaw(
         os.remove(
             os.path.join(mitresaw_output_directory, "ThreatActors_Techniques.csv")
         )
-    else:
-        pass
     if not art:
         if saw:
             print_saw(saw, tagline, "                    ")
@@ -294,10 +275,6 @@ def mainsaw(
             print_saw(saw, tagline, "partial")
             print_saw(saw, tagline, "-")  # remove saw
             print()
-        else:
-            pass
-    else:
-        pass
     if str(terms) != "['.']":
         terms_insert = " associated with '\033[1;36m{}\033[1;m'".format(
             str(terms)[2:-2].replace("_", " ").replace("', '", "\033[1;m', '\033[1;36m")
@@ -331,7 +308,7 @@ def mainsaw(
                 for context in str(contextual_information)[2:-7].split(": '-', '"):
                     group_id = context.split("||")[0]
                     group_name = context.split("||")[1]
-                    context_id = context.split("||")[2][1:]
+                    context_id = context.split("||")[3][1:]
                     if "T{},".format(context_id) in str(techniques_file_content):
                         replaced_row_technique = re.sub(
                             r"(,https://attack.mitre.org/techniques/T\d{4}(?:\/\d{3})?)(,)",
@@ -343,7 +320,7 @@ def mainsaw(
                         )[1].split("\"\\n', 'T")[0]
                         technique_name = associated_technique.split(",")[0]
                         technique_information = re.findall(
-                            r",(.*),https:\/\/attack\.mitre\.org\/techniques\/T[\d\.\/]+±§§±,[^,]+,[^,]+,\d+\.\d+,\"?((?:Reconnaissance|Resource Development|Initial Access|Execution|Persistence|Privilege Escalation|Defense Evasion|Credential Access|Discovery|Lateral Movement|Collection|Command and Control|Exfiltration|Impact)(?:, (?:Reconnaissance|Resource Development|Initial Access|Execution|Persistence|Privilege Escalation|Defense Evasion|Credential Access|Discovery|Lateral Movement|Collection|Command and Control|Exfiltration|Impact)){0,6})\"?,(\"?.*\"?),(\"?(?:Azure AD|Containers|Google Workspace|IaaS|Linux|Network|Office 365|PRE|SaaS|Windows|macOS)(?:(?:, (?:Azure AD|Containers|Google Workspace|IaaS|Linux|Network|Office 365|PRE|SaaS|Windows|macOS))?){0,10}\"?),(\"[^\"]+\"),",
+                            r",(.*),https:\/\/attack\.mitre\.org\/techniques\/T[\d\.\/]+±§§±,[^,]+,[^,]+,[^,]+,\d+\.\d+,\"?((?:Reconnaissance|Resource Development|Initial Access|Execution|Persistence|Privilege Escalation|Defense Evasion|Credential Access|Discovery|Lateral Movement|Collection|Command and Control|Exfiltration|Impact)(?:, (?:Reconnaissance|Resource Development|Initial Access|Execution|Persistence|Privilege Escalation|Defense Evasion|Credential Access|Discovery|Lateral Movement|Collection|Command and Control|Exfiltration|Impact)){0,6})\"?,(\"?.*\"?),(\"?(?:Azure AD|Containers|Google Workspace|IaaS|Linux|Network|Office 365|PRE|SaaS|Windows|macOS)(?:(?:, (?:Azure AD|Containers|Google Workspace|IaaS|Linux|Network|Office 365|PRE|SaaS|Windows|macOS))?){0,10}\"?),(\"[^\"]+\"),",
                             associated_technique,
                         )
                         if len(technique_information) > 0:
@@ -374,8 +351,6 @@ def mainsaw(
                                                 group_name
                                             )
                                         )
-                                    else:
-                                        pass
                                     group_navlayer = requests.get(
                                         "https://attack.mitre.org/groups/{}/{}-enterprise-layer.json".format(
                                             group_id,
@@ -385,12 +360,6 @@ def mainsaw(
                                     if not os.path.exists(navlayer_json):
                                         with open(navlayer_json, "wb") as navlayer_file:
                                             navlayer_file.write(group_navlayer.content)
-                                    else:
-                                        pass
-                                else:
-                                    pass
-                            else:
-                                pass
                             if str(platforms) == "['.']":
                                 valid_procedure = "{}||{}||{}||{}||{}".format(
                                     context,
@@ -411,8 +380,6 @@ def mainsaw(
                                             technique_data_sources,
                                         )
                                         valid_procedures.append(valid_procedure)
-                                    else:
-                                        pass
                             techniques_in_scope.append(
                                 "T{}||{}".format(
                                     context_id, technique_name, technique_tactics
@@ -426,13 +393,7 @@ def mainsaw(
                                     technique_tactics,
                                 )
                             )
-                        else:
-                            pass
-                    else:
-                        pass
                     groups_in_scope.append(group_name)
-        else:
-            pass
     print()
     consolidated_procedures = sorted(list(set(valid_procedures)))
     counted_techniques = Counter(techniques_in_scope)
@@ -525,8 +486,6 @@ def mainsaw(
                     query_pairings.append(
                         "{}||{}||{}".format(technique_id, technique_name, parameters)
                     )
-                else:
-                    pass
             logsource = tidy_log_sources(dataset.split("||")[-3])
             log_sources.append(logsource.replace(", , ", ", "))
         mitresaw_techniques = re.findall(
@@ -557,8 +516,6 @@ def mainsaw(
             .split(", ")
         )
         counted_log_sources = Counter(list(filter(None, log_sources)))
-        """print(counted_log_sources)
-        time.sleep(60)"""
         log_coverage = list(
             filter(
                 None,
@@ -566,23 +523,32 @@ def mainsaw(
             )
         )
         print(
-            "\n\n     The following log sources are required to \033[4;37mdetect\033[1;m the aforementioned ATT&CK techniques:"
+            "\n\n     The following log sources are required to \033[4;37maid with detecting\033[1;m the aforementioned ATT&CK techniques:"
         )
         print()
         time.sleep(0.5)
+        total = 0
         for log_count in log_coverage:
             log = log_count[0]
             count = log_count[1]
             percentage = str(int(count / len(log_sources) * 100))
-            if percentage == "0":
+            if percentage == "0" and show_others:
                 percentage = "<1"
-            else:
-                pass
-            print(
-                "       - {}: \033[1;37m{}%\033[1;m".format(
-                    log.strip().strip('"'), percentage
+                print(
+                    "       - {}: \033[1;37m{}%\033[1;m".format(
+                        log.strip().strip('"'), percentage
+                    )
                 )
-            )
+            elif percentage != "0":
+                print(
+                    "       - {}: \033[1;37m{}%\033[1;m".format(
+                        log.strip().strip('"'), percentage
+                    )
+                )
+                total += int(percentage)
+        if not show_others:
+            others = 100 - total
+            print("       - Others: \033[1;37m{}%\033[1;m".format(others))
     else:
         print("\n    -> No evidence could be found which match the provided criteria.")
     print("\n\n")

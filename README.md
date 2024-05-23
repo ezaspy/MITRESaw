@@ -1,4 +1,3 @@
-<!-- PROJECT LOGO -->
 ```
                                                                          ,
                                  ╓╗╗,                          ,╓▄▄▄Φ▓▓██▌╫D
@@ -26,31 +25,17 @@
   <p align="center">
     Cut through MITRE ATT&amp;CK framework and extract relevant identifiers for searching and hunting.
     <br><br>
-    <a href="https://mit-license.org">
-      <img src="https://img.shields.io/github/license/ezaspy/MITRESaw" alt="License: MIT">
-    </a>
-    <a href="https://github.com/ezaspy/MITRESaw/issues">
-      <img src="https://img.shields.io/github/issues/ezaspy/MITRESaw" alt="Issues">
-    </a>
-    <a href="https://github.com/ezaspy/MITRESaw/network/members">
-      <img src="https://img.shields.io/github/forks/ezaspy/MITRESaw" alt="Forks">
-    <a href="https://github.com/ezaspy/MITRESaw/stargazers">
-      <img src="https://img.shields.io/github/stars/ezaspy/MITRESaw" alt="Stars">
-    </a>
-    <a href="https://www.python.org">
-      <img src="https://img.shields.io/badge/language-python-pink" alt="Python">
-    </a>
-    </a>
-      <img src="https://img.shields.io/github/last-commit/ezaspy/MITRESaw" alt="Last Commit">
-    </a>
-    <a href="https://github.com/psf/black">
-      <img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg">
-    </a>
+    <a href="https://mit-license.org"><img src="https://img.shields.io/github/license/ezaspy/MITRESaw" alt="License: MIT"></a>
+    <a href="https://github.com/ezaspy/MITRESaw/issues"><img src="https://img.shields.io/github/issues/ezaspy/MITRESaw" alt="Issues"></a>
+    <a href="https://github.com/ezaspy/MITRESaw/network/members"><img src="https://img.shields.io/github/forks/ezaspy/MITRESaw" alt="Forks"></a>
+    <a href="https://github.com/ezaspy/MITRESaw/stargazers"><img src="https://img.shields.io/github/stars/ezaspy/MITRESaw" alt="Stars"></a>
+    <a href="https://www.python.org"><img src="https://img.shields.io/badge/language-python-pink" alt="Python"></a>
+    <a><img src="https://img.shields.io/github/last-commit/ezaspy/MITRESaw" alt="Last Commit"></a>
+    <a href="https://github.com/psf/black"><img alt="Code style: black" src="https://img.shields.io/badge/code%20style-black-000000.svg"></a>
     <br><br>
   </p>
 </p>
 
-<!-- TABLE OF CONTENTS -->
 ## Table of Contents
 
 * [About the Project](#about-the-project)
@@ -62,22 +47,19 @@
 * [Acknowledgements](#acknowledgements)
 
 
-<br><br>
+<br><br><br>
 
-<!-- ABOUT THE PROJECT -->
 ## About The Project
 
 At its core, MITRESaw creates a CSV-formatted version of the [MITRE ATT&amp;CK Framework](https://attack.mitre.org) and outputs individual Threat Actor [ATT&amp;CK Navigator](https://mitre-attack.github.io/attack-navigator/) JSON files, depending on keywords provided.<br>
 MITRESaw has evolved to also produce search queries based on extracted indicators (aligned with Threat Group TTPs). Searches currently provided are compatible with Splunk, Azure Sentinel and Elastic/Kibana. SIGMA will be included soon.
-<br><br>
+<br><br><br>
 
-<!-- INSTALLATION -->
 ## Installation
 
 `python3 -m pip install -r requirements.txt`
-<br><br>
+<br><br><br>
 
-<!-- USAGE EXAMPLES -->
 ## Usage
 `python3 MITRESaw.py framework platforms searchterms threatgroups [-a] [-n] [-q] [-s] [-t]`
 
@@ -104,7 +86,9 @@ optional arguments:
 ```
 
 ### Example
+
 `python3 MITRESaw.py Windows,Linux,macOS mining,technology,defense,_uk_,law . -q`
+
 <br><br>
 
 ### Notices
@@ -123,14 +107,13 @@ APT41 modified legitimate Windows services to install malware backdoors. APT41 c
 <br><br><br>
 
 
-<!-- ACKNOWLEDGEMENTS -->
 ## Acknowledgements
 * [Best-README-Template](https://github.com/othneildrew/Best-README-Template)
 * [Img Shields](https://shields.io)
 * [Choose an Open Source License](https://choosealicense.com)
 * [GitHub Pages](https://pages.github.com)
 
-
+<br><br><br>
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->

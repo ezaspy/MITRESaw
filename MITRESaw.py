@@ -41,6 +41,14 @@ parser.add_argument(
     default=False,
 )
 parser.add_argument(
+    "-o",
+    "--showotherlogsources",
+    help="Show log sources which can detect identified techniques where the coverage is less than 1%\n",
+    action="store_const",
+    const=True,
+    default=False,
+)
+parser.add_argument(
     "-q",
     "--queries",
     help="Build search queries based on results - to be imported into Splunk; Azure Sentinel; Elastic/Kibana\n",
@@ -63,13 +71,14 @@ attackframework = args.framework
 operating_platforms = args.platforms
 search_terms = args.searchterms
 provided_groups = args.threatgroups
+show_others = args.showotherlogsources
 art = args.asciiart
 navigationlayers = args.navlayers
 queries = args.queries
 truncate = args.truncate
 
 attack_framework = attackframework[0].title()
-attack_version = "13.1"
+attack_version = "15.1"
 sheet_tabs = [
     "techniques-techniques",
     "techniques-procedure examples",
@@ -88,6 +97,7 @@ def main():
         operating_platforms,
         search_terms,
         provided_groups,
+        show_others,
         art,
         navigationlayers,
         queries,

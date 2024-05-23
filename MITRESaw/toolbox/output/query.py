@@ -21,8 +21,6 @@ def build_queries(queries, mitresaw_output_directory, query_pairings):
     if queries:
         if os.path.exists(os.path.join(mitresaw_output_directory, "queries.conf")):
             os.remove(os.path.join(mitresaw_output_directory, "queries.conf"))
-        else:
-            pass
         with open(
             os.path.join(mitresaw_output_directory, "queries.conf"), "a"
         ) as opmitre_queries:
@@ -51,8 +49,6 @@ def build_queries(queries, mitresaw_output_directory, query_pairings):
                     or_queries = andor_query.replace("++", '", "')
                 if not or_queries.startswith('("') and not or_queries.endswith('")'):
                     or_queries = '("{}")'.format(or_queries)
-                else:
-                    pass
                 or_queries = re.sub(r'(" and "[^\"]+")(, ")', r"\1§§\2", or_queries)
                 or_queries = re.sub(r'(" and "[^\"]+")(\))', r"\1)\2", or_queries)
                 or_queries = re.sub(r'(", )("[^\"]+" and ")', r"\1§§\2", or_queries)
@@ -220,5 +216,3 @@ def build_queries(queries, mitresaw_output_directory, query_pairings):
                         )
                     for query_to_write in queries_to_write:
                         opmitre_queries.write(query_to_write)
-    else:
-        pass

@@ -90,10 +90,6 @@ def collect_files(
                                         procedure_description,
                                     )
                                 ] = "-"
-                            else:
-                                pass
-                        else:
-                            pass
                         if str(groups) == "['.']":
                             group_procedures = all_groups_procedures
                         else:
@@ -123,8 +119,6 @@ def collect_files(
                                                     procedure_description,
                                                 )
                                             ] = "-"
-                                        else:
-                                            pass
                                         all_groups_procedures[
                                             "{}||{}||{}||{}||{}".format(
                                                 group_id,
@@ -134,12 +128,6 @@ def collect_files(
                                                 procedure_description,
                                             )
                                         ] = "-"
-                                    else:
-                                        pass
-                                else:
-                                    pass
-        else:
-            pass
     # obtaining group description
     for groupsfile in os.listdir(mitresaw_mitre_files):
         if groupsfile.endswith("groups-groups.csv"):
@@ -153,15 +141,15 @@ def collect_files(
                         r"\\n',<##>'\1",
                         group_rows,
                     )
-                    for group_row in group_rows.split("\\n',<##>'"):
+                    for group_row in group_rows.split("\\n',<##>'")[1:]:
                         group_description_row = re.findall(
-                            r"^([^,]+),([^,]+),([^\n]+),https:\/\/attack\.mitre\.org\/groups\/\1,\d{1,2} ",
+                            r"^([^,]+),([^,]+),([^,]+),([^\n]+),https:\/\/attack\.mitre\.org\/groups\/\1,\d{1,2} ",
                             group_row,
                         )
                         if len(group_description_row) > 0:
                             group_id = group_description_row[0][0]
-                            group_name = group_description_row[0][1]
-                            group_description = group_description_row[0][2]
+                            group_name = group_description_row[0][2]
+                            group_description = group_description_row[0][3]
                             group_id_name = (
                                 "[{}](https://attack.mitre.org/groups/{})".format(
                                     group_name, group_id
@@ -195,8 +183,6 @@ def collect_files(
                                                 in group_description.lower()
                                             ):
                                                 additional_terms.append(additional_term)
-                                            else:
-                                                pass
                                         for group_procedure in group_procedures.keys():
                                             if (
                                                 group_procedure.split("||")[0]
@@ -215,18 +201,10 @@ def collect_files(
                                                     )
                                                 ] = "-"
                                         additional_terms.clear()
-                                else:
-                                    pass
-                        else:
-                            pass
-        else:
-            pass
     if len(group_descriptions) == 0:
         print()
         print(
             "\n    No \033[1;33mgroups\033[1;m could be found with the keywords provided. Perhaps try again with less restrictive \033[1;36msearch terms\033[1;m.\n\n\n"
         )
         sys.exit()
-    else:
-        pass
     return group_descriptions, group_procedures

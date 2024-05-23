@@ -87,17 +87,3 @@ def print_saw(saw, tagline, spacing):
         print(tagline)
         print(re.sub(r"(@[\S\s]{36})", r"", saw))
         time.sleep(0.1)
-        subprocess.Popen(["clear"]).communicate()
-        print(tagline)
-        print(re.sub(r"(@[\S\s]{38})", r"", saw))
-        time.sleep(0.1)
-        subprocess.Popen(["clear"]).communicate()
-        print(tagline)
-        print(re.sub(r"(@[\S\s]{40})", r"", saw))
-        time.sleep(0.1)
-        subprocess.Popen(["clear"]).communicate()
-        print(tagline)
-        print(re.sub(r"(@[\S\s]{42})", r"", saw))
-        time.sleep(0.2)
-    else:
-        pass

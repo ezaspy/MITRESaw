@@ -28,6 +28,10 @@ def tidy_log_sources(dataset):
             "Application-specific logging",
         )
         .replace(
+            "Certificate: Certificate Registration",
+            "Certificate registration monitoring",
+        )
+        .replace(
             "Cloud Service: Cloud Service Disable",
             "Cloud API logging; Cloud Audit logging",
         )
@@ -59,6 +63,22 @@ def tidy_log_sources(dataset):
             "Cloud Storage: Cloud Storage Modification",
             "Cloud API logging; Cloud Audit logging",
         )
+        .replace("Command: Command Execution", "Command-line logging")
+        .replace(
+            "Container: Container Creation",
+            "Cloud API logging; Cloud Audit logging; Command-line logging",
+        )
+        .replace(
+            "Container: Container Enumeration",
+            "Cloud API logging; Cloud Audit logging; Command-line logging",
+        )
+        .replace(
+            "Container: Container Start",
+            "Cloud API logging; Cloud Audit logging; Command-line logging",
+        )
+        .replace("Domain Name: Active DNS", "Domain registration monitoring")
+        .replace("Domain Name: Domain Registration", "Domain registration monitoring")
+        .replace("Domain Name: Passive DNS", "Domain registration monitoring")
         .replace("Drive: Drive Access", "Windows event logs; setupapi.dev.log")
         .replace(
             "Drive: Drive Creation",
@@ -66,10 +86,7 @@ def tidy_log_sources(dataset):
         )
         .replace("Drive: Drive Modification", "Windows event logs; setupapi.dev.log")
         .replace("Driver: Driver Load", "Sysmon")
-        .replace("Command: Command Execution", "Command-line logging")
-        .replace("Container: Container Creation", "Command-line logging")
-        .replace("Container: Container Enumeration", "Command-line logging")
-        .replace("Container: Container Start", "Command-line logging")
+        .replace("Driver: Driver Metadata", "Sysmon")
         .replace(
             "File: File Access",
             "Command-line logging; Windows event logs; Sysmon",
@@ -106,6 +123,10 @@ def tidy_log_sources(dataset):
             "Command-line logging; Windows event logs",
         )
         .replace(
+            "Group: Group Metadata",
+            "Command-line logging; Windows event logs",
+        )
+        .replace(
             "Group: Group Modification",
             "Command-line logging; Windows event logs",
         )
@@ -123,10 +144,15 @@ def tidy_log_sources(dataset):
             "Instance: Instance Enumeration", "Cloud API logging; Cloud Audit logging"
         )
         .replace(
+            "Instance: Instance Metadata", "Cloud API logging; Cloud Audit logging"
+        )
+        .replace(
             "Instance: Instance Modification", "Cloud API logging; Cloud Audit logging"
         )
         .replace("Instance: Instance Start", "Cloud API logging; Cloud Audit logging")
         .replace("Instance: Instance Stop", "Cloud API logging; Cloud Audit logging")
+        .replace("Internet Scan: Response Content", "netflow")
+        .replace("Internet Scan: Response Metadata", "netflow")
         .replace("Kernel: Kernel Module Load", "/lib/module logging")
         .replace(
             "Logon Session: Logon Session Creation",
@@ -135,6 +161,14 @@ def tidy_log_sources(dataset):
         .replace(
             "Logon Session: Logon Session Metadata",
             "",
+        )
+        .replace(
+            "Malware Repository: Malware Content",
+            "Artefact acquisition; Malware analysis",
+        )
+        .replace(
+            "Malware Repository: Malware Metadata",
+            "Artefact acquisition; Malware analysis",
         )
         .replace("Module: Module Load", "Command-line logging; Sysmon")
         .replace("Named Pipe: Named Pipe Metadata", "Command-line logging; Sysmon")
@@ -148,6 +182,19 @@ def tidy_log_sources(dataset):
         )
         .replace("Network Traffic: Network Traffic Content", "PCAP")
         .replace("Network Traffic: Network Traffic Flow", "netflow")
+        .replace("Persona: Social Media", "Social Media account monitoring")
+        .replace(
+            "Pod: Pod Creation",
+            "Cloud API logging; Cloud Audit logging; Command-line logging",
+        )
+        .replace(
+            "Pod: Pod Enumeration",
+            "Cloud API logging; Cloud Audit logging; Command-line logging",
+        )
+        .replace(
+            "Pod: Pod Modification",
+            "Cloud API logging; Cloud Audit logging; Command-line logging",
+        )
         .replace(
             "Process: OS API Execution",
             "Process monitoring; PowerShell Script Block logging; Command-line logging",
