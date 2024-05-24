@@ -87,7 +87,7 @@ def extract_indicators(
                 list(filter(lambda port: "10" != port, port_identifiers)),
             )
         )  # remove string from list
-        port_identifiers = list(set(port_identifiers))
+        port_identifiers = sorted(list(set(port_identifiers)))
         return port_identifiers
 
     def extract_evt_indicators(description):
@@ -111,7 +111,7 @@ def extract_indicators(
         evt_identifiers = re.findall(
             r"(?:(?:Event ?|E)I[Dd]( ==)? ?\"?(\d{1,5}))", description
         )
-        evt_identifiers = list(set(evt_identifiers))
+        evt_identifiers = sorted(list(set(evt_identifiers)))
         return evt_identifiers
 
     def extract_reg_indicators(
@@ -166,7 +166,7 @@ def extract_indicators(
             .strip("\\")
             .strip(),
         )
-        registry_identifiers = list(set(reg_identifiers))
+        registry_identifiers = sorted(list(set(reg_identifiers)))
         return registry_identifiers
 
     def extract_cmd_indicators(description):
@@ -175,7 +175,7 @@ def extract_indicators(
             description,
         )
         cmd_identifiers = []
-        all_identifiers = list(set(terms_identifiers))
+        all_identifiers = sorted(list(set(terms_identifiers)))
         for identifier_set in all_identifiers:
             for each_identifier in identifier_set:
                 if (
@@ -218,17 +218,35 @@ def extract_indicators(
                         .strip("\\")
                         .strip()
                     )
-                    # identifier = re.sub("\\\\('[^'\]\\]+)\\\\(')", "\1\2", identifier)
+                    identifier = (
+                        identifier.replace("\\\\\\\\\\'", "'")
+                        .replace("\\\\\\\\'", "'")
+                        .replace("\\\\\\'", "'")
+                        .replace("\\\\'", "'")
+                        .replace("\\'", "'")
+                        .replace("'process", "process")
+                        .replace("\"'", '"')
+                    )
                     if len(identifier) > 1:
                         cmd_identifiers.append(identifier)
-        cmd_identifiers = list(set(cmd_identifiers))
+        cmd_identifiers = sorted(list(set(cmd_identifiers)))
         return cmd_identifiers
 
-    """def extract_cve_indicators(description):
-        pass"""
+    def extract_cve_indicators(description):
+        cve_identifiers = re.findall(
+            r"(CVE\-\d+\-\d+)",
+            description,
+        )
+        cve_identifiers = sorted(list(set(cve_identifiers)))
+        return cve_identifiers
 
-    """def extract_software_indicators(description):
-        pass"""
+    def extract_software_indicators(description):
+        software_identifiers = re.findall(
+            r"\[([^\]]+)\]\(https:\/\/attack\.mitre\.org\/software/S",
+            description,
+        )
+        software_identifiers = sorted(list(set(software_identifiers)))
+        return software_identifiers
 
     def add_to_evidence(
         valid_procedure,
@@ -366,14 +384,40 @@ def extract_indicators(
         )
     else:
         cmd_identifiers = []
-    """if "CVE" in description.upper():
+    if "CVE" in description.upper():
         cve_identifiers = extract_cve_indicators(description)
+        evidence_found = add_to_evidence(
+            valid_procedure,
+            previous_findings,
+            evidence_found,
+            technique_id,
+            technique_name,
+            software_group_name,
+            "cve",
+            cve_identifiers,
+            software_group_terms,
+            terms,
+            truncate,
+        )
     else:
-        cve_identifiers = []"""
-    """if "/software/" in description.lower():
+        cve_identifiers = []
+    if "/software/" in description.lower():
         software_identifiers = extract_software_indicators(description)
+        evidence_found = add_to_evidence(
+            valid_procedure,
+            previous_findings,
+            evidence_found,
+            technique_id,
+            technique_name,
+            software_group_name,
+            "software",
+            software_identifiers,
+            software_group_terms,
+            terms,
+            truncate,
+        )
     else:
-        software_identifiers = []"""
+        software_identifiers = []
     if (
         len(port_identifiers) == 0
         and len(evt_identifiers) == 0
