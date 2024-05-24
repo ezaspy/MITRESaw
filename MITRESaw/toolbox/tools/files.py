@@ -13,6 +13,7 @@ def collect_files(
     additional_terms,
 ):
     all_groups_procedures = {}
+
     # cleaning up procedure_examples
     os.rename(
         os.path.join(
@@ -56,6 +57,7 @@ def collect_files(
             ".techniques-procedure_examples.csv",
         )
     )
+
     # obtaining group procedure
     for groupsfile in os.listdir(mitresaw_mitre_files):
         if groupsfile.endswith("groups-techniques_used.csv"):
@@ -128,6 +130,7 @@ def collect_files(
                                                 procedure_description,
                                             )
                                         ] = "-"
+
     # obtaining group description
     for groupsfile in os.listdir(mitresaw_mitre_files):
         if groupsfile.endswith("groups-groups.csv"):
