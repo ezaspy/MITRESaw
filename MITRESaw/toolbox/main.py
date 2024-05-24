@@ -63,6 +63,7 @@ def mainsaw(
         time.sleep(0.1)
         print()
         print("    -> Obtaining MITRE ATT&CK files...")
+
         # obtaining framework
         for sheet_tab in sheet_tabs:
             sheet, tab = sheet_tab.split("-")
@@ -352,6 +353,7 @@ def mainsaw(
                             technique_detection = technique_information[0][2]
                             technique_platforms = technique_information[0][3]
                             technique_data_sources = technique_information[0][4]
+
                             # obtaining navigation layers for all identified threat groups
                             if navigationlayers:
                                 navlayer_output_directory = os.path.join(
@@ -448,6 +450,7 @@ def mainsaw(
             truncate,
         )
         threat_actor_technique_id_name_findings = []
+
         # constructing sub-technique pairing due to format of sub-techniques in mitre output files e.g. T1566.001||Spearphishing Attachment
         for technique_found in technique_findings:
             threat_actor_found = technique_found.split("||")[1]
@@ -519,6 +522,7 @@ def mainsaw(
             "', '",
             '", "comment": "", "score": 1, "color": "#66b1ff", "showSubtechniques": false}}, {{"techniqueID": "',
         )
+
         # enterprise-attack navigation layer only currently
         mitresaw_navlayer = '{{"description": "Enterprise techniques used by various Threat Actors, produced by MITRESaw", "name": "{}", "domain": "enterprise-attack", "versions": {{"layer": "4.4", "attack": "13", "navigator": "4.8.1"}}, "techniques": [{{"techniqueID": "{}", "comment": "", "score": 1, "color": "#66b1ff", "showSubtechniques": false}}], "gradient": {{"colors": ["#ffffff", "#66b1ff"], "minValue": 0, "maxValue": 1}}, "legendItems": [{{"label": "identified from MITRESaw analysis", "color": "#66b1ff"}}]}}\n'.format(
             mitresaw_output_directory.split("/")[2][11:], mitresaw_techniques_insert
