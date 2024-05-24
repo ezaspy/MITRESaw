@@ -26,6 +26,8 @@ def extract_indicators(
         elif evidence_type == "evt":
             evidence_insert = " event log ID(s): "
             identifiers = re.findall(r"\d+", str(identifiers))
+        elif evidence_type == "software":
+            evidence_insert = " software: "
         else:
             evidence_insert = ": "
         if str(terms) != "['.']":
@@ -297,6 +299,7 @@ def extract_indicators(
     description = "{}||{}||{}".format(
         software_group_usage, technique_description, technique_detection
     )
+
     # extracting ports
     port_identifiers = extract_port_indicators(description)
     if len(port_identifiers) > 0:
@@ -315,6 +318,7 @@ def extract_indicators(
         )
     else:
         port_identifiers = []
+
     # extracting event IDs
     if "Event ID" in description or "EID" in description or "EventId" in description:
         evt_identifiers = extract_evt_indicators(description)
@@ -336,6 +340,7 @@ def extract_indicators(
         )
     else:
         evt_identifiers = []
+
     # extracting registry artefacts
     if (
         "hklm\\" in description.lower()
@@ -366,6 +371,7 @@ def extract_indicators(
         )
     else:
         reg_identifiers = []
+
     # extracting commands
     if "<code>" in description or "`" in description:
         cmd_identifiers = extract_cmd_indicators(description)
