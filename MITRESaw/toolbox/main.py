@@ -5,6 +5,7 @@ import random
 import re
 import requests
 import subprocess
+import sys
 import time
 from collections import Counter
 from datetime import datetime
@@ -30,6 +31,27 @@ def mainsaw(
     attack_version,
     sheet_tabs,
 ):
+
+    # checking latest version
+    try:
+        version_history = requests.get("https://attack.mitre.org/resources/versions/")
+    except requests.exceptions.ConnectionError:
+        print("\n\n\tUnable to connect to the Internet. Please try again.\n\n\n")
+        sys.exit()
+    latest_version = re.findall(
+        r"<span><strong>([^<]+)",
+        str(version_history.content)
+        .split("<h5><strong>Current Version</strong></h5>")[1]
+        .split("<h5><strong>Most Recent Versions</strong></h5>")[0],
+    )[0].split("ATT&amp;CK v")[1]
+    if latest_version != attack_version:
+        print(
+            "\n\n\tThe version of ATT&CK in \033[1;36mMITRESaw.py\033[1;m (\033[1;31m{}\033[1;m) does \n\tnot match the latest published version (\033[1;31m{}\033[1;m). \n\n\tPlease adjust the \033[1;33mattack_version\033[1;m variable \n\tin \033[1;36mMITRESaw.py\033[1;m and try again.\n\n".format(
+                attack_version, latest_version
+            )
+        )
+        sys.exit()
+
     mitresaw_root_date = os.path.join(".", str(datetime.now())[0:10])
     if not os.path.exists(mitresaw_root_date):
         os.makedirs(mitresaw_root_date)
@@ -97,6 +119,7 @@ def mainsaw(
             ) as final_csv:
                 final_csv.write(formated_csv)
             os.remove(temp_csv)
+
     time.sleep(0.1)
     saw = """
 @                                                         ,
