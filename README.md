@@ -61,11 +61,11 @@ MITRESaw has evolved to also produce search queries based on extracted indicator
 <br><br><br>
 
 ## Usage
-`python3 MITRESaw.py framework platforms searchterms threatgroups [-a] [-n] [-q] [-s] [-t]`
+`python3 MITRESaw.py framework platforms searchterms threatgroups [-a] [-n] [-o] [-q] [-s] [-t]`
 
 To display usage, simply run: `python3 MITRESaw.py -h`
 ```
-usage: MITRESaw.py [-h] [-a] [-n] [-q] [-t] framework platforms searchterms threatgroups
+usage: MITRESaw.py [-h] [-a] [-n] [-o] [-q] [-t] framework platforms searchterms threatgroups
 
 positional arguments:
   framework             Specify which framework to collect from - Enterprise, ICS or Mobile
@@ -74,15 +74,16 @@ positional arguments:
                          Valid options are: 'Azure_AD', 'Containers', 'Google_Workspace', 'IaaS', 'Linux', 'Network', 'Office_365', 'PRE', 'SaaS', 'Windows', 'macOS'
   searchterms           Filter Threat Actor results based on specific industries e.g. mining,technology,defense,law (use _ instead of spaces)
                          Use . to not filter i.e. obtain all Threat Actors
-  threatgroups      Filter Threat Actor results based on specific group names and/or Software e.g. APT29,HAFNIUM,Lazurus_Group,Turla,AppleJeus,Brute Ratel C4 (use _ instead of spaces)
+  threatgroups          Filter Threat Actor results based on specific group names and/or Software e.g. APT29,HAFNIUM,Lazurus_Group,Turla,AppleJeus,Brute Ratel C4 (use _ instead of spaces)
                          Use . to not filter i.e. obtain all Threat Actors
 
 optional arguments:
-  -h, --help            show this help message and exit
-  -a, --asciiart        Don't show ASCII Art of the saw.
-  -n, --navlayers       Obtain ATT&CK Navigator layers for Groups and Software identified during extraction of identifable evidence
-  -q, --queries         Build search queries based on results - to be imported into Splunk; Azure Sentinel; Elastic/Kibana
-  -t, --truncate        Truncate printing of indicators for a cleaner output (they are still written to output file)
+  -h, --help                  show this help message and exit
+  -a, --asciiart              Don't show ASCII Art of the saw.
+  -n, --navlayers             Obtain ATT&CK Navigator layers for Groups and Software identified during extraction of identifable evidence
+  -o, --showotherlogsources   Show log sources which can detect identified techniques where the coverage is less than 1% 
+  -q, --queries               Build search queries based on results - to be imported into Splunk; Azure Sentinel; Elastic/Kibana
+  -t, --truncate              Truncate printing of indicators for a cleaner output (they are still written to output file)
 ```
 
 ### Example
