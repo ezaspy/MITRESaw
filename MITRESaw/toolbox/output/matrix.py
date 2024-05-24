@@ -59,6 +59,7 @@ def build_matrix(
         opmitre_csv.write(
             "group_software_id,group_software_name,group_software_description,group_software_link,group_software_searchterms,technique_id,technique_name,groupgroup_software,technique_description,technique_detection,technique_platforms,technique_datasources,evidence_type,evidence_indicators\n"
         )
+
     # compile intersect
     for dataset in consolidated_techniques:
         threat_actors_xaxis.append(dataset.split("||")[1])
@@ -84,6 +85,7 @@ def build_matrix(
     techniques_count = sorted(
         techniques_count.items(), key=lambda x: x[1], reverse=True
     )
+
     # collect potential sub-technique and tactics
     for uniq_technique in uniq_techniques_yaxis:
         parent_technique, sub_technique = find_parent_sub_technique(
@@ -94,6 +96,7 @@ def build_matrix(
             .split("{}||".format(uniq_technique))[1]
             .split("', '")[0]
         )
+
         # need to identify criteria for what is detectable, non-detectable and out-of-scope
         for threat_actor in uniq_threat_actors_xaxis:
             threat_actor_technique_regex = (
@@ -125,6 +128,7 @@ def build_matrix(
                     "{}".format(str(markers)[2:-2].count("O")),
                     str(len(markers)),
                 ]
+
                 # readjusting the count from int->str->int
                 if str(row_technique[-2]) != "0" and str(row_technique[-3]) != "0":
                     row_technique = (
@@ -137,6 +141,7 @@ def build_matrix(
                     formatted_technique_row.append(int(row_technique[-1]))
                     rows_techniques.append(formatted_technique_row)
         markers.clear()
+
     # output intersect
     for technique_count in techniques_count:
         parent_sub_count = [
