@@ -34,8 +34,7 @@ def extract_indicators(
             extracted_terms = re.findall(r"\w+", str(software_group_terms))
             software_group_terms_insert = sorted(list(set(extracted_terms)))
             terms_insert = " -> '\033[1;36m{}\033[1;m' ->".format(
-                str(software_group_terms_insert)
-                .replace()[2:-2]
+                str(software_group_terms_insert)[2:-2]
                 .replace("_", " ")
                 .replace("', '", "\033[1;m', '\033[1;36m")
             )
