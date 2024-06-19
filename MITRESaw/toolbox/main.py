@@ -11,11 +11,19 @@ from collections import Counter
 from datetime import datetime
 
 from MITRESaw.toolbox.extract import extract_indicators
+from MITRESaw.toolbox.tools.csv import write_csv
 from MITRESaw.toolbox.output.matrix import build_matrix
 from MITRESaw.toolbox.output.query import build_queries
 from MITRESaw.toolbox.tools.files import collect_files
-from MITRESaw.toolbox.tools.logs import tidy_log_sources
 from MITRESaw.toolbox.tools.saw import print_saw
+
+
+def replace_commas_in_group_desc(csv_line):
+    return re.sub(
+        r"^((?:[^,]+,){6}.*,relationship--[^,]+,\d{2} [A-Za-z]{3,20} \d{4},\d{2} [A-Za-z]{3,20} \d{4}[^\[]+[^\(]+\([^\)]+\)[^,]+), ",
+        r"\1%2C ",
+        csv_line,
+    )
 
 
 def mainsaw(
@@ -194,7 +202,7 @@ def mainsaw(
     tagline = "{}        *ATT&CK for {} v{}\n".format(
         chosen_title, attack_framework.title(), attack_version
     )
-    time.sleep(2)
+    time.sleep(1)
     subprocess.Popen(["clear"]).communicate()
     if not art:
         if saw:
@@ -249,9 +257,11 @@ def mainsaw(
         if str(groups) == "['.']":
             groups_filename_insert = ""
             groups_insert = "Threat Actors"
+            all_insert = "all "
         else:
             groups_filename_insert = "{}".format(str(groups)[2:-2].replace("', '", "-"))
             groups_insert = "{}".format(str(groups)[2:-2])
+            all_insert = ""
         mitresaw_output_directory = os.path.join(
             mitresaw_root_date,
             "{}_{}_{}".format(
@@ -318,8 +328,10 @@ def mainsaw(
     )
     print()
     print(
-        "    -> Extracting \033[1;31mIdentifiers\033[1;m from \033[1;32mTechniques\033[1;m based on \033[1;33m{}\033[1;m{}".format(
-            groups_insert.replace("', '", "\033[1;m, \033[1;33m"), terms_insert
+        "    -> Extracting \033[1;31mIdentifiers\033[1;m from \033[1;32mTechniques\033[1;m based on {}\033[1;33m{}\033[1;m{}".format(
+            all_insert,
+            groups_insert.replace("', '", "\033[1;m, \033[1;33m"),
+            terms_insert,
         )
     )
     for csvtechnique in os.listdir(mitre_files):
@@ -482,6 +494,9 @@ def mainsaw(
     all_evidence.append(technique_findings)
     consolidated_techniques = all_evidence[0]
     if len(consolidated_techniques) > 0:
+        print("\n     Correlating results and creating intersecting matrix...")
+
+        # outputting relevant queries
         query_pairings = build_matrix(
             mitresaw_output_directory,
             consolidated_techniques,
@@ -495,25 +510,16 @@ def mainsaw(
                     terms_insert
                 )
             )"""
-        for dataset in consolidated_techniques:
-            with open(
-                os.path.join(mitresaw_output_directory, "ThreatActors_Techniques.csv"),
-                "a",
-            ) as opmitre_csv:
-                opmitre_csv.write(
-                    "{}\n".format(dataset.replace(",||,", ",").replace("||", ","))
-                )
-                if queries:
-                    technique_id = dataset.split("||")[2]
-                    technique_name = dataset.split("||")[3]
-                    parameters = (
-                        dataset.split("||")[-1].replace("\\\\\\\\", "\\\\").lower()
-                    )
-                    query_pairings.append(
-                        "{}||{}||{}".format(technique_id, technique_name, parameters)
-                    )
-            logsource = tidy_log_sources(dataset.split("||")[-3])
-            log_sources.append(logsource.replace(", , ", ", "))
+
+        # outputting csv file for ingestion into other tools
+        write_csv(
+            consolidated_techniques,
+            mitresaw_output_directory,
+            mitre_files,
+            queries,
+            query_pairings,
+            log_sources,
+        )
         mitresaw_techniques = re.findall(
             r"\|\|(T\d{3}[\d\.]+)\|\|", str(consolidated_techniques)
         )
@@ -522,9 +528,10 @@ def mainsaw(
             "', '",
             '", "comment": "", "score": 1, "color": "#66b1ff", "showSubtechniques": false}}, {{"techniqueID": "',
         )
+        print("      Done.")
 
         # enterprise-attack navigation layer only currently
-        mitresaw_navlayer = '{{"description": "Enterprise techniques used by various Threat Actors, produced by MITRESaw", "name": "{}", "domain": "enterprise-attack", "versions": {{"layer": "4.4", "attack": "13", "navigator": "4.8.1"}}, "techniques": [{{"techniqueID": "{}", "comment": "", "score": 1, "color": "#66b1ff", "showSubtechniques": false}}], "gradient": {{"colors": ["#ffffff", "#66b1ff"], "minValue": 0, "maxValue": 1}}, "legendItems": [{{"label": "identified from MITRESaw analysis", "color": "#66b1ff"}}]}}\n'.format(
+        mitresaw_navlayer = '{{"description": "Enterprise techniques used by various Threat Actors, produced by MITRESaw", "name": "{}", "domain": "enterprise-attack", "versions": {{"layer": "4.4", "attack": "15", "navigator": "4.8.1"}}, "techniques": [{{"techniqueID": "{}", "comment": "", "score": 1, "color": "#66b1ff", "showSubtechniques": false}}], "gradient": {{"colors": ["#ffffff", "#66b1ff"], "minValue": 0, "maxValue": 1}}, "legendItems": [{{"label": "identified from MITRESaw analysis", "color": "#66b1ff"}}]}}\n'.format(
             mitresaw_output_directory.split("/")[2][11:], mitresaw_techniques_insert
         )
         with open(
@@ -550,7 +557,7 @@ def mainsaw(
             )
         )
         print(
-            "\n\n     The following log sources are required to \033[4;37maid with detecting\033[1;m the aforementioned ATT&CK techniques:"
+            "\n     The following log sources are recommended to \033[4;37maid with detecting\033[1;m the aforementioned ATT&CK techniques:"
         )
         print()
         time.sleep(0.5)
