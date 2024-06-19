@@ -57,7 +57,7 @@ def build_matrix(
         os.path.join(mitresaw_output_directory, "ThreatActors_Techniques.csv"), "w"
     ) as opmitre_csv:
         opmitre_csv.write(
-            "group_software_id,group_software_name,group_software_description,group_software_link,group_software_searchterms,technique_id,technique_name,groupgroup_software,technique_description,technique_detection,technique_platforms,technique_datasources,evidence_type,evidence_indicators\n"
+            "group_software_id,group_software_name,technique_id,item_identifier,group_software,relation_identifier,created,last_modified,group_software_description,technique_name,technique_tactics,technique_description,technique_detection,technique_platforms,technique_datasources,evidence_type,evidence_indicators\n"
         )
 
     # compile intersect
@@ -73,7 +73,7 @@ def build_matrix(
         threat_actors_count.append(list(threat_actors_pair))
     uniq_threat_actors_xaxis = sorted(list(set(threat_actors_xaxis)))
     uniq_techniques_yaxis = sorted(list(set(techniques_yaxis)))
-    uniq_threat_actor_techniques = sorted(list(set(threat_actor_techniques)))
+    # uniq_threat_actor_techniques = sorted(list(set(threat_actor_techniques)))
     for each_technique in techniques_yaxis:
         parent_technique, sub_technique = find_parent_sub_technique(
             each_technique, sorted_threat_actors_techniques_in_scope
