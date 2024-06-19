@@ -3,6 +3,85 @@ import re
 import time
 
 
+def make_evidence_insert(evidence_type, identifiers):
+    if evidence_type == "ports":
+        evidence_insert = " (port(s))"
+        identifiers = re.findall(r"\d+", str(identifiers))
+    elif evidence_type == "evt":
+        evidence_insert = " (Windows event log ID(s))"
+        identifiers = re.findall(r"\d+", str(identifiers))
+    elif evidence_type == "software":
+        evidence_insert = " (software)"
+    else:
+        evidence_insert = ""
+    return evidence_insert
+
+
+def make_terms_insert(terms, software_group_terms):
+    if str(terms) != "['.']":
+        extracted_terms = re.findall(r"\w+", str(software_group_terms))
+        software_group_terms_insert = sorted(list(set(extracted_terms)))
+        terms_insert = " -> '\033[1;36m{}\033[1;m' ->".format(
+            str(software_group_terms_insert)[2:-2]
+            .replace("_", " ")
+            .replace("', '", "\033[1;m', '\033[1;36m")
+        )
+    else:
+        terms_insert = " ->"
+    return terms_insert
+
+
+def make_spacer(software_group_name):
+    """if len(software_group_name) == 25:
+        group_spacer = ""
+    elif len(software_group_name) == 24:
+        group_spacer = " "
+    elif len(software_group_name) == 23:
+        group_spacer = " "
+    elif len(software_group_name) == 22:
+        group_spacer = " "
+    elif len(software_group_name) == 21:
+        group_spacer = " "
+    """
+    if len(software_group_name) == 20:
+        group_spacer = " "
+    elif len(software_group_name) == 19:
+        group_spacer = " "
+    elif len(software_group_name) == 18:
+        group_spacer = "  "
+    elif len(software_group_name) == 17:
+        group_spacer = "   "
+    elif len(software_group_name) == 16:
+        group_spacer = "    "
+    elif len(software_group_name) == 15:
+        group_spacer = "     "
+    elif len(software_group_name) == 14:
+        group_spacer = "      "
+    elif len(software_group_name) == 13:
+        group_spacer = "       "
+    elif len(software_group_name) == 12:
+        group_spacer = "        "
+    elif len(software_group_name) == 11:
+        group_spacer = "         "
+    elif len(software_group_name) == 10:
+        group_spacer = "          "
+    elif len(software_group_name) == 9:
+        group_spacer = "           "
+    elif len(software_group_name) == 8:
+        group_spacer = "            "
+    elif len(software_group_name) == 7:
+        group_spacer = "             "
+    elif len(software_group_name) == 6:
+        group_spacer = "              "
+    elif len(software_group_name) == 5:
+        group_spacer = "               "
+    elif len(software_group_name) == 4:
+        group_spacer = "                "
+    elif len(software_group_name) == 3:
+        group_spacer = "                 "
+    return group_spacer
+
+
 def extract_indicators(
     valid_procedure,
     terms,
@@ -11,8 +90,9 @@ def extract_indicators(
     previous_findings,
     truncate,
 ):
+
     def finding_to_stdout(
-        technique_name,
+        technique_id,
         software_group_name,
         evidence_type,
         identifiers,
@@ -20,45 +100,37 @@ def extract_indicators(
         terms,
         truncate,
     ):
-        if evidence_type == "ports":
-            evidence_insert = " port(s): "
-            identifiers = re.findall(r"\d+", str(identifiers))
-        elif evidence_type == "evt":
-            evidence_insert = " event log ID(s): "
-            identifiers = re.findall(r"\d+", str(identifiers))
-        elif evidence_type == "software":
-            evidence_insert = " software: "
+        evidence_insert = make_evidence_insert(evidence_type, identifiers)
+        terms_insert = make_terms_insert(terms, software_group_terms)
+        if "." in technique_id:
+            spacer = " "
         else:
-            evidence_insert = ": "
-        if str(terms) != "['.']":
-            extracted_terms = re.findall(r"\w+", str(software_group_terms))
-            software_group_terms_insert = sorted(list(set(extracted_terms)))
-            terms_insert = " -> '\033[1;36m{}\033[1;m' ->".format(
-                str(software_group_terms_insert)
-                .replace()[2:-2]
-                .replace("_", " ")
-                .replace("', '", "\033[1;m', '\033[1;36m")
-            )
-        else:
-            terms_insert = " ->"
+            spacer = "     "
+        group_spacer = make_spacer(software_group_name)
         identifiers = (
             str(identifiers)[2:-2]
             .replace("\\\\\\\\\\\\\\\\", "\\\\\\\\")
             .replace("\\\\\\\\", "\\\\")
             .replace('"reg" add ', "reg add ")
         )
-        print_statement = "      -> '\033[1;33m{}\033[1;m'{} '\033[1;32m{}\033[1;m'{}'\033[1;31m{}\033[1;m'".format(
+        if "', '" in identifiers:
+            evidence_insert = evidence_insert.replace("(s)", "s")
+        else:
+            evidence_insert = evidence_insert.replace("(s)", "")
+        print_statement = "  -> '\033[1;33m{}\033[1;m'{}{} '\033[1;32m{}\033[1;m'{}: '\033[1;31m{}\033[1;m'{}".format(
             software_group_name,
+            group_spacer,
             terms_insert,
-            technique_name,
-            evidence_insert,
+            technique_id,
+            spacer,
             identifiers.replace("', '", "\033[1;m', '\033[1;31m"),
+            evidence_insert,
         )
         if truncate:
             print(print_statement.split(": ")[0])
         else:
             print(print_statement)
-        time.sleep(0.2)
+        time.sleep(0.1)
         return identifiers.replace("', '", "++")
 
     def extract_port_indicators(description):
@@ -105,6 +177,7 @@ def extract_indicators(
             .replace("\\\\\\'", "'")
             .replace("\\\\'", "'")
             .replace("\\'", "'")
+            .replace("'), ('", "")
             .strip(",")
             .strip('"')
             .strip(",")
@@ -113,7 +186,9 @@ def extract_indicators(
         evt_identifiers = re.findall(
             r"(?:(?:Event ?|E)I[Dd]( ==)? ?\"?(\d{1,5}))", description
         )
-        evt_identifiers = sorted(list(set(evt_identifiers)))
+        evt_identifiers = re.findall(
+            r"'(\d+)'", str(sorted(list(set(evt_identifiers))))
+        )
         return evt_identifiers
 
     def extract_reg_indicators(
@@ -135,6 +210,7 @@ def extract_indicators(
             .strip('"')
             .strip(",")
             .strip('"')
+            .strip("'")
         )
         reg_identifiers = re.findall(
             r"([Hh][Kk](?:[Ll][Mm]|[Cc][Uu]|[Ee][Yy])[^\{\}\|\"'!$<>`]+)",
@@ -194,6 +270,7 @@ def extract_indicators(
                     and not each_identifier.lower().startswith("[hkcu")
                     and not each_identifier.lower().startswith("[hkey")
                     and not each_identifier == ", and "
+                    and not each_identifier == "or"
                 ):
                     identifier = (
                         each_identifier.lower()
@@ -231,6 +308,22 @@ def extract_indicators(
                     )
                     if len(identifier) > 1:
                         cmd_identifiers.append(identifier)
+        # filtering out strings which match exactly
+        strings_match = ["or"]
+        cmd_identifiers = list(
+            filter(
+                lambda x: any("or" != x for string in strings_match),
+                cmd_identifiers,
+            )
+        )
+        # filtering out strings contained in identifier
+        strings_in = ["where the"]
+        cmd_identifiers = list(
+            filter(
+                lambda x: any(string not in x for string in strings_in),
+                cmd_identifiers,
+            )
+        )
         cmd_identifiers = sorted(list(set(cmd_identifiers)))
         return cmd_identifiers
 
