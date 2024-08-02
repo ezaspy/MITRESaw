@@ -1,86 +1,40 @@
 import re
 import os
-from MITRESaw.toolbox.tools.logs import generic_mapping
-from MITRESaw.toolbox.mapping import bespoke_mapping
+from MITRESaw.toolbox.tools.map_general_logs import generic_mapping
 
 
-def map_log_sources(detectable_threat_actor_technique):
-    log_sources = []
-    group = detectable_threat_actor_technique.split("||")[0]
-    technique_id = detectable_threat_actor_technique.split("||")[2]
-    technique_name = detectable_threat_actor_technique.split("||")[6].split(",")[0]
-    technique_desc = detectable_threat_actor_technique.split("||")[7]
-    platform = detectable_threat_actor_technique.split("||")[8]
-    evidence_type = detectable_threat_actor_technique.split("||")[10]
-    evidence = (
-        detectable_threat_actor_technique.split("||")[11]
-        .replace("', 'G", "")
-        .replace("\\'", "'")
-        .replace("\\\\\\\\", "\\\\")
-    )
-    # mapping to identifiable evidence according to https://attack.mitre.org/datasources/
-    logsources = generic_mapping(
-        technique_id,
-        platform,
-        detectable_threat_actor_technique.split("||")[9],
-        evidence_type,
-    )
-    for logsource in logsources[1:-1].split(", "):
-        log_sources.append(logsource)
-    # mapping to specific log sources available within Company X
-    log_sources = bespoke_mapping(
-        technique_id,
-        platform,
-        sorted(
-            list(
-                set(
-                    str(list(set(log_sources)))[2:-2]
-                    .replace("; ", "', '")
-                    .split("', '")
+def write_csv_techniques_mapped_to_logsources(
+    mitresaw_output_directory,
+    mapped_log_sources,
+):
+    with open(
+        os.path.join(
+            mitresaw_output_directory, "ThreatActors_Techniques_LogSourceDetections.csv"
+        ),
+        "w",
+    ) as mapped_logsources:
+        mapped_logsources.write(
+            "group_name,technique_id,technique_name,technique_description,technique_platforms,technique_datasources,evidence_type,evidence_indicators\n"
+        )
+    with open(
+        os.path.join(
+            mitresaw_output_directory, "ThreatActors_Techniques_LogSourceDetections.csv"
+        ),
+        "w",
+    ) as mapped_logsources:
+        for mapping in mapped_log_sources:
+            mapped_logsources.write(
+                re.sub(
+                    r"\(Citation: [^\)]+\)",
+                    r"",
+                    mapping.replace("..  ", ". ")
+                    .replace("\\\\\\\\\\\\\\'", "'")
+                    .replace("\\\\\\\\\\\\'", "'")
+                    .replace("\\\\\\\\\\'", "'")
+                    .replace("\\\\\\\\'", "'")
+                    .replace("\\\\\\'", "'"),
                 )
             )
-        ),
-        evidence_type,
-    )
-    return (
-        group,
-        technique_id,
-        technique_name,
-        technique_desc,
-        platform,
-        log_sources,
-        evidence_type,
-        evidence,
-    )
-
-
-def write_csv_log_source_mapping(
-    detectable_threat_actor_technique,
-):
-    (
-        group,
-        technique_id,
-        technique_name,
-        technique_desc,
-        platform,
-        log_sources,
-        evidence_type,
-        evidence,
-    ) = map_log_sources(detectable_threat_actor_technique)
-    import subprocess, time
-
-    subprocess.Popen(["clear"])
-    time.sleep(2)
-    print("\n\n\n\n")
-    print(group)
-    print(technique_id)
-    print(technique_name)
-    print(platform)
-    print(log_sources)
-    print(evidence_type)
-    print(evidence)
-    print("\n\n\n\n")
-    time.sleep(3000)
 
 
 def write_csv_summary(
@@ -92,10 +46,6 @@ def write_csv_summary(
     log_sources,
 ):
     for dataset in consolidated_techniques:
-        """print(dataset)
-        import time
-
-        time.sleep(3000)"""
         with open(
             os.path.join(mitresaw_output_directory, "ThreatActors_Techniques.csv"),
             "a",

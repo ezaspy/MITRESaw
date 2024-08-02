@@ -11,11 +11,12 @@ from collections import Counter
 from datetime import datetime
 
 from MITRESaw.toolbox.extract import extract_indicators
-from MITRESaw.toolbox.tools.csv import write_csv_summary
+from MITRESaw.toolbox.tools.write_csv import write_csv_summary
+from MITRESaw.toolbox.tools.write_csv import write_csv_techniques_mapped_to_logsources
 from MITRESaw.toolbox.output.matrix import build_matrix
 from MITRESaw.toolbox.output.query import build_queries
-from MITRESaw.toolbox.tools.files import collect_files
-from MITRESaw.toolbox.tools.saw import print_saw
+from MITRESaw.toolbox.tools.read_files import collect_files
+from MITRESaw.toolbox.tools.print_saw import print_saw
 
 
 def replace_commas_in_group_desc(csv_line):
@@ -273,12 +274,6 @@ def mainsaw(
         contextual_information,
         previous_findings,
     ) = ({} for _ in range(4))
-    if os.path.exists(
-        os.path.join(mitresaw_output_directory, "ThreatActors_Techniques.csv")
-    ):
-        os.remove(
-            os.path.join(mitresaw_output_directory, "ThreatActors_Techniques.csv")
-        )
     if not art:
         if saw:
             print_saw(saw, tagline, "                    ")
@@ -483,7 +478,7 @@ def mainsaw(
         print("\n     Correlating results and creating intersecting matrix...")
 
         # outputting relevant queries
-        query_pairings = build_matrix(
+        query_pairings, mapped_log_sources = build_matrix(
             mitresaw_output_directory,
             consolidated_techniques,
             sorted_threat_actors_techniques_in_scope,
@@ -496,7 +491,9 @@ def mainsaw(
                     terms_insert
                 )
             )"""
-
+        write_csv_techniques_mapped_to_logsources(
+            mitresaw_output_directory, mapped_log_sources
+        )
         # outputting csv file for ingestion into other tools
         write_csv_summary(
             consolidated_techniques,

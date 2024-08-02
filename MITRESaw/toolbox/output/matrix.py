@@ -3,7 +3,8 @@ import os
 import pandas
 import re
 from collections import Counter
-from MITRESaw.toolbox.tools.csv import write_csv_log_source_mapping
+from MITRESaw.toolbox.tools.map_general_logs import generic_mapping
+from MITRESaw.toolbox.tools.map_bespoke_logs import bespoke_mapping
 
 
 def find_parent_sub_technique(technique, sorted_threat_actors_techniques_in_scope):
@@ -36,6 +37,47 @@ def find_parent_sub_technique(technique, sorted_threat_actors_techniques_in_scop
     return parent_technique, sub_technique
 
 
+def map_log_sources(detectable_threat_actor_technique):
+    log_sources = []
+    group = detectable_threat_actor_technique.split("||")[0]
+    technique_id = detectable_threat_actor_technique.split("||")[2]
+    technique_name = detectable_threat_actor_technique.split("||")[6].split(",")[0]
+    technique_desc = detectable_threat_actor_technique.split("||")[7]
+    platform = detectable_threat_actor_technique.split("||")[8]
+    evidence_type = detectable_threat_actor_technique.split("||")[10]
+    evidence = (
+        detectable_threat_actor_technique.split("||")[11]
+        .replace("', 'G", "")
+        .replace("\\'", "'")
+        .replace("\\\\\\\\", "\\\\")
+    )
+    # mapping to identifiable evidence according to https://attack.mitre.org/datasources/
+    logsources = generic_mapping(
+        technique_id,
+        platform,
+        detectable_threat_actor_technique.split("||")[9],
+        evidence_type,
+    )
+    for logsource in logsources[1:-1].split(", "):
+        log_sources.append(logsource)
+    # mapping to specific log sources available within Company X
+    log_sources = bespoke_mapping(
+        technique_id,
+        platform,
+        sorted(
+            list(
+                set(
+                    str(list(set(log_sources)))[2:-2]
+                    .replace("; ", "', '")
+                    .split("', '")
+                )
+            )
+        ),
+        evidence_type,
+    )
+    return f"{group},{technique_id},{technique_name},{technique_desc.replace(",", "%2C")},{platform},{str(log_sources)[2:-2].replace("', '", "; ")},{evidence_type},{str(evidence)[2:-2].replace("', '", "; ")}"
+
+
 def build_matrix(
     mitresaw_output_directory,
     consolidated_techniques,
@@ -56,10 +98,11 @@ def build_matrix(
     ) = ([] for _ in range(10))
     with open(
         os.path.join(mitresaw_output_directory, "ThreatActors_Techniques.csv"), "w"
-    ) as opmitre_csv:
-        opmitre_csv.write(
+    ) as mitresaw_csv:
+        mitresaw_csv.write(
             "group_software_id,group_software_name,technique_id,item_identifier,group_software,relation_identifier,created,last_modified,group_software_description,technique_name,technique_tactics,technique_description,technique_detection,technique_platforms,technique_datasources,evidence_type,evidence_indicators\n"
         )
+    mapped_log_sources = []
 
     # compile intersect
     for dataset in consolidated_techniques:
@@ -115,7 +158,8 @@ def build_matrix(
                     marker = "O"
                 else:
                     marker = "X"
-                    write_csv_log_source_mapping(detectable_threat_actor_technique[0])
+                    mapping = map_log_sources(detectable_threat_actor_technique[0])
+                    mapped_log_sources.append(mapping)
             else:
                 marker = "-"
             markers.append(marker)
@@ -194,4 +238,4 @@ def build_matrix(
         sorted_intersect_data_frame.to_excel(
             intersect_writer, sheet_name="DetectableMatrix"
         )
-    return query_pairings
+    return query_pairings, mapped_log_sources
