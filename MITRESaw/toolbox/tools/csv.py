@@ -1,9 +1,88 @@
 import re
 import os
-from MITRESaw.toolbox.tools.logs import tidy_log_sources
+from MITRESaw.toolbox.tools.logs import generic_mapping
+from MITRESaw.toolbox.mapping import bespoke_mapping
 
 
-def write_csv(
+def map_log_sources(detectable_threat_actor_technique):
+    log_sources = []
+    group = detectable_threat_actor_technique.split("||")[0]
+    technique_id = detectable_threat_actor_technique.split("||")[2]
+    technique_name = detectable_threat_actor_technique.split("||")[6].split(",")[0]
+    technique_desc = detectable_threat_actor_technique.split("||")[7]
+    platform = detectable_threat_actor_technique.split("||")[8]
+    evidence_type = detectable_threat_actor_technique.split("||")[10]
+    evidence = (
+        detectable_threat_actor_technique.split("||")[11]
+        .replace("', 'G", "")
+        .replace("\\'", "'")
+        .replace("\\\\\\\\", "\\\\")
+    )
+    # mapping to identifiable evidence according to https://attack.mitre.org/datasources/
+    logsources = generic_mapping(
+        technique_id,
+        platform,
+        detectable_threat_actor_technique.split("||")[9],
+        evidence_type,
+    )
+    for logsource in logsources[1:-1].split(", "):
+        log_sources.append(logsource)
+    # mapping to specific log sources available within Company X
+    log_sources = bespoke_mapping(
+        technique_id,
+        technique_name,
+        platform,
+        sorted(
+            list(
+                set(
+                    str(list(set(log_sources)))[2:-2]
+                    .replace("; ", "', '")
+                    .split("', '")
+                )
+            )
+        ),
+        evidence_type,
+    )
+    return (
+        group,
+        technique_id,
+        technique_name,
+        platform,
+        log_sources,
+        evidence_type,
+        evidence,
+    )
+
+
+def write_csv_log_source_mapping(
+    detectable_threat_actor_technique,
+):
+    (
+        group,
+        technique_id,
+        technique_name,
+        platform,
+        log_sources,
+        evidence_type,
+        evidence,
+    ) = map_log_sources(detectable_threat_actor_technique)
+    import subprocess
+    import time
+
+    """subprocess.Popen(["clear"])
+    time.sleep(2)
+    print("\n\n\n\n")
+    print(group)
+    print(technique_id)
+    print(technique_name)
+    print(platform)
+    print(log_sources)
+    print(evidence_type)
+    print(evidence)
+    print("\n\n\n\n")"""
+
+
+def write_csv_summary(
     consolidated_techniques,
     mitresaw_output_directory,
     mitre_files,
@@ -12,6 +91,10 @@ def write_csv(
     log_sources,
 ):
     for dataset in consolidated_techniques:
+        """print(dataset)
+        import time
+
+        time.sleep(3000)"""
         with open(
             os.path.join(mitresaw_output_directory, "ThreatActors_Techniques.csv"),
             "a",
@@ -140,11 +223,12 @@ def write_csv(
                                     "{},".format(csv_line.split(",")[2])
                                 ):
                                     missing_fields = re.findall(
-                                        r"^T[\d\.\/]+,attack-pattern--[^,]+,([^,]+),.*?,https:\/\/attack\.mitre\.org\/techniques\/T[\d\.\/]+,[^,]+,[^,]+,[^,]+,\d+\.\d+,\"?((?:Reconnaissance|Resource Development|Initial Access|Execution|Persistence|Privilege Escalation|Defense Evasion|Credential Access|Discovery|Lateral Movement|Collection|Command and Control|Exfiltration|Impact)(?:, (?:Reconnaissance|Resource Development|Initial Access|Execution|Persistence|Privilege Escalation|Defense Evasion|Credential Access|Discovery|Lateral Movement|Collection|Command and Control|Exfiltration|Impact)){0,6})\"?,\"?.*\"?,\"?(?:Azure AD|Containers|Google Workspace|IaaS|Linux|Network|Office 365|PRE|SaaS|Windows|macOS)(?:(?:, (?:Azure AD|Containers|Google Workspace|IaaS|Linux|Network|Office 365|PRE|SaaS|Windows|macOS))?){0,10}\"?,\"?[^\"]+\"?,",
+                                        r"^T[\d\.\/]+,attack-pattern--[^,]+,([^,]+),.*?,https:\/\/attack\.mitre\.org\/techniques\/T[\d\.\/]+,[^,]+,[^,]+,[^,]+,\d+\.\d+,\"?((?:Reconnaissance|Resource Development|Initial Access|Execution|Persistence|Privilege Escalation|Defense Evasion|Credential Access|Discovery|Lateral Movement|Collection|Command and Control|Exfiltration|Impact)(?:, (?:Reconnaissance|Resource Development|Initial Access|Execution|Persistence|Privilege Escalation|Defense Evasion|Credential Access|Discovery|Lateral Movement|Collection|Command and Control|Exfiltration|Impact)){0,6})\"?,\"?.*\"?,\"?((?:Azure AD|Containers|Google Workspace|IaaS|Linux|Network|Office 365|PRE|SaaS|Windows|macOS)(?:(?:, (?:Azure AD|Containers|Google Workspace|IaaS|Linux|Network|Office 365|PRE|SaaS|Windows|macOS))?){0,10})\"?,\"?[^\"]+\"?,",
                                         line,
                                     )[0]
                                     technique_name = missing_fields[0]
                                     technique_tactics = missing_fields[1]
+                                    technique_platforms = missing_fields[2]
                                     # splitting on technique name to insert the respective tactic
                                     extracted_parts = csv_line.split(
                                         ",{},".format((technique_name))
@@ -167,5 +251,10 @@ def write_csv(
                 query_pairings.append(
                     "{}||{}||{}".format(technique_id, technique_name, parameters)
                 )
-        logsource = tidy_log_sources(dataset.split("||")[-3])
+        logsource = generic_mapping(
+            dataset.split("||")[3],
+            technique_platforms,
+            dataset.split("||")[-3],
+            dataset.split("||")[-2],
+        )
         log_sources.append(logsource.replace(", , ", ", "))
