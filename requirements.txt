@@ -1,5 +1,6 @@
 mitreattack-python==2.0.13
 ipywidgets==7.6.5
+numpy==1.26.4
 pandas==1.3.4
 Requests==2.31.0
 openpyxl==3.0.9

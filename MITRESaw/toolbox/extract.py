@@ -394,23 +394,28 @@ def extract_indicators(
     )
 
     # extracting ports
-    port_identifiers = extract_port_indicators(description)
-    if len(port_identifiers) > 0:
-        evidence_found = add_to_evidence(
-            valid_procedure,
-            previous_findings,
-            evidence_found,
-            technique_id,
-            technique_name,
-            software_group_name,
-            "ports",
-            port_identifiers,
-            software_group_terms,
-            terms,
-            truncate,
-        )
-    else:
-        port_identifiers = []
+    if (
+        technique_id != "T1070.006"
+        and technique_id != "T1098"
+        and technique_id != "T1529"
+    ):
+        port_identifiers = extract_port_indicators(description)
+        if len(port_identifiers) > 0:
+            evidence_found = add_to_evidence(
+                valid_procedure,
+                previous_findings,
+                evidence_found,
+                technique_id,
+                technique_name,
+                software_group_name,
+                "ports",
+                port_identifiers,
+                software_group_terms,
+                terms,
+                truncate,
+            )
+        else:
+            port_identifiers = []
 
     # extracting event IDs
     if "Event ID" in description or "EID" in description or "EventId" in description:

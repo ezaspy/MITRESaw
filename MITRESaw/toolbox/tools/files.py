@@ -96,9 +96,9 @@ def collect_files(
                             group_procedures = all_groups_procedures
                         else:
                             for group in groups:
-                                if group.replace(
+                                if f"{group.replace(
                                     "_", " "
-                                ).lower() in group_procedure_csv_row.lower() and group_procedure_csv_row.startswith(
+                                ).lower()}," in group_procedure_csv_row.lower() and group_procedure_csv_row.startswith(
                                     "G"
                                 ):
                                     row_elements = re.findall(

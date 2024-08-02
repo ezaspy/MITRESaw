@@ -11,7 +11,7 @@ from collections import Counter
 from datetime import datetime
 
 from MITRESaw.toolbox.extract import extract_indicators
-from MITRESaw.toolbox.tools.csv import write_csv
+from MITRESaw.toolbox.tools.csv import write_csv_summary
 from MITRESaw.toolbox.output.matrix import build_matrix
 from MITRESaw.toolbox.output.query import build_queries
 from MITRESaw.toolbox.tools.files import collect_files
@@ -206,22 +206,6 @@ def mainsaw(
     subprocess.Popen(["clear"]).communicate()
     if not art:
         if saw:
-            print_saw(
-                saw, tagline, "                                                        "
-            )
-            print_saw(
-                saw, tagline, "                                                      "
-            )
-            print_saw(
-                saw, tagline, "                                                    "
-            )
-            print_saw(
-                saw, tagline, "                                                  "
-            )
-            print_saw(saw, tagline, "                                                ")
-            print_saw(saw, tagline, "                                              ")
-            print_saw(saw, tagline, "                                            ")
-            print_saw(saw, tagline, "                                          ")
             print_saw(saw, tagline, "                                        ")
             print_saw(saw, tagline, "                                      ")
             print_saw(saw, tagline, "                                    ")
@@ -243,7 +227,7 @@ def mainsaw(
         print_saw(saw, tagline, "                      ")
     else:
         print(tagline)
-    if saw:  # creating MITRESaw output file names
+    if True:  # creating MITRESaw output file names
         if str(platforms) == "['.']":
             platforms_filename_insert = ""
         else:
@@ -278,10 +262,11 @@ def mainsaw(
         valid_procedures,
         all_evidence,
         log_sources,
+        logsources,
         groups_in_scope,
         techniques_in_scope,
         groups_techniques_in_scope,
-    ) = ([] for _ in range(8))
+    ) = ([] for _ in range(9))
     (
         group_procedures,
         group_descriptions,
@@ -334,6 +319,7 @@ def mainsaw(
             terms_insert,
         )
     )
+    # obtaining relevant techniques based on parameters provided
     for csvtechnique in os.listdir(mitre_files):
         if csvtechnique.endswith("techniques-techniques.csv"):
             with open(
@@ -512,7 +498,7 @@ def mainsaw(
             )"""
 
         # outputting csv file for ingestion into other tools
-        write_csv(
+        write_csv_summary(
             consolidated_techniques,
             mitresaw_output_directory,
             mitre_files,
@@ -549,7 +535,16 @@ def mainsaw(
             .replace("; ", ", ")
             .split(", ")
         )
-        counted_log_sources = Counter(list(filter(None, log_sources)))
+        # removing specific event IDs as they are not needed for reporting stats in stdout
+        for log_source in log_sources:
+            if ": " in log_source:
+                logsources.append(log_source.split(": ")[0])
+            elif log_source.startswith("*nix /var/log/"):
+                logsources.append(f"{log_source.split("/log/")[0]}/log")
+            else:
+                logsources.append(log_source)
+        # counting the occurance of each log source
+        counted_log_sources = Counter(list(filter(None, logsources)))
         log_coverage = list(
             filter(
                 None,
@@ -563,7 +558,7 @@ def mainsaw(
         time.sleep(0.5)
         total = 0
         for log_count in log_coverage:
-            log = log_count[0]
+            log = log_count[0].split(": ")[0]
             count = log_count[1]
             percentage = str(int(count / len(log_sources) * 100))
             if percentage == "0" and show_others:

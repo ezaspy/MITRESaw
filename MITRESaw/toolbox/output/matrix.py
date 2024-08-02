@@ -3,6 +3,7 @@ import os
 import pandas
 import re
 from collections import Counter
+from MITRESaw.toolbox.tools.csv import write_csv_log_source_mapping
 
 
 def find_parent_sub_technique(technique, sorted_threat_actors_techniques_in_scope):
@@ -101,19 +102,20 @@ def build_matrix(
         for threat_actor in uniq_threat_actors_xaxis:
             threat_actor_technique_regex = (
                 re.escape(threat_actor)
-                + r"\|\|T[\d\.]+\|\|"
+                + r"\|\|uses\|\|"
                 + re.escape(uniq_technique)
-                + r"(?:\|\|[^\|]+){7}\|\|(ports|evt|reg|cmd|N/A)\|\|"
+                + r"(?:[\.\d]+)?(?:\|\|[^\|]+){7}\|\|(ports|evt|reg|cmd|software|cve|N/A)\|\|([^\|]+)', 'G"
             )
-            undetectable_threat_actor_technique = re.search(
+            detectable_threat_actor_technique = re.search(
                 threat_actor_technique_regex,
                 str(consolidated_techniques),
             )
-            if undetectable_threat_actor_technique != None:
-                if undetectable_threat_actor_technique[0].split("||")[-2] == "N/A":
+            if detectable_threat_actor_technique != None:
+                if detectable_threat_actor_technique[0].split("||")[-2] == "N/A":
                     marker = "O"
                 else:
                     marker = "X"
+                    write_csv_log_source_mapping(detectable_threat_actor_technique[0])
             else:
                 marker = "-"
             markers.append(marker)
