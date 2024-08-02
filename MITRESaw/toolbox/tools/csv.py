@@ -30,7 +30,6 @@ def map_log_sources(detectable_threat_actor_technique):
     # mapping to specific log sources available within Company X
     log_sources = bespoke_mapping(
         technique_id,
-        technique_name,
         platform,
         sorted(
             list(
@@ -47,6 +46,7 @@ def map_log_sources(detectable_threat_actor_technique):
         group,
         technique_id,
         technique_name,
+        technique_desc,
         platform,
         log_sources,
         evidence_type,
@@ -61,15 +61,15 @@ def write_csv_log_source_mapping(
         group,
         technique_id,
         technique_name,
+        technique_desc,
         platform,
         log_sources,
         evidence_type,
         evidence,
     ) = map_log_sources(detectable_threat_actor_technique)
-    import subprocess
-    import time
+    import subprocess, time
 
-    """subprocess.Popen(["clear"])
+    subprocess.Popen(["clear"])
     time.sleep(2)
     print("\n\n\n\n")
     print(group)
@@ -79,7 +79,8 @@ def write_csv_log_source_mapping(
     print(log_sources)
     print(evidence_type)
     print(evidence)
-    print("\n\n\n\n")"""
+    print("\n\n\n\n")
+    time.sleep(3000)
 
 
 def write_csv_summary(
