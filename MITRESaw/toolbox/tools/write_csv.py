@@ -14,27 +14,27 @@ def write_csv_techniques_mapped_to_logsources(
         "w",
     ) as mapped_logsources:
         mapped_logsources.write(
-            "group_name,technique_id,technique_name,technique_description,technique_platforms,technique_datasources,evidence_type,evidence_indicators\n"
+            "group_name,technique_id,technique_name,technique_description,technique_platforms,technique_datasources,evidence_type,evidence_indicators,cve_description\n"
         )
     with open(
         os.path.join(
             mitresaw_output_directory, "ThreatActors_Techniques_LogSourceDetections.csv"
         ),
-        "w",
+        "a",
     ) as mapped_logsources:
         for mapping in mapped_log_sources:
-            mapped_logsources.write(
-                re.sub(
-                    r"\(Citation: [^\)]+\)",
-                    r"",
-                    mapping.replace("..  ", ". ")
-                    .replace("\\\\\\\\\\\\\\'", "'")
-                    .replace("\\\\\\\\\\\\'", "'")
-                    .replace("\\\\\\\\\\'", "'")
-                    .replace("\\\\\\\\'", "'")
-                    .replace("\\\\\\'", "'"),
-                )
+            mapped_entry = re.sub(
+                r"\(Citation: [^\)]+\)",
+                r"",
+                mapping.replace("..  ", ". ")
+                .replace("\\\\\\\\\\\\\\'", "'")
+                .replace("\\\\\\\\\\\\'", "'")
+                .replace("\\\\\\\\\\'", "'")
+                .replace("\\\\\\\\'", "'")
+                .replace("\\\\\\'", "'")
+                .replace("\n\n", "\n"),
             )
+            mapped_logsources.write(f"{mapped_entry}\n")
 
 
 def write_csv_summary(
