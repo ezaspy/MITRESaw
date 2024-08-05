@@ -74,8 +74,15 @@ def map_log_sources(detectable_threat_actor_technique):
             )
         ),
         evidence_type,
+        evidence
     )
-    return f"{group},{technique_id},{technique_name},{technique_desc.replace(",", "%2C")},{platform},{str(log_sources)[2:-2].replace("', '", "; ")},{evidence_type},{str(evidence)[2:-2].replace("', '", "; ")}"
+    if log_sources[0].startswith("CVE-") or "', 'CVE-" in str(log_sources):
+        cves = ""
+        for cve in log_sources:
+            cves = f"{cves}{group},{technique_id},{technique_name},{technique_desc.replace(",", "%2C")},{platform},{cve.split(",")[1]} ({cve.split(",")[2]}),{evidence_type},{cve.split(",")[0]},{cve.split(",")[3]}\n"
+        return cves
+    else:
+        return f"{group},{technique_id},{technique_name},{technique_desc.replace(",", "%2C")},{platform},{str(log_sources)[2:-2].replace("', '", "; ")},{evidence_type},{str(evidence)[2:-2].replace("', '", "; ")}"
 
 
 def build_matrix(
